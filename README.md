@@ -60,8 +60,9 @@ All three are called through the [Meta Model API](https://dev.meta.ai/products/m
 costs about five cents.
 
 The only other service is the voice: Meta's API has no text-to-speech, so **ElevenLabs** reads each question aloud
-(Eleven v4 Turbo with a soft audio-tag direction, a stock voice; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and
-it is optional: without an ElevenLabs key the questions are shown, not spoken. The question text, which contains a few
+(Eleven v4 Turbo with a soft audio-tag direction, in "Story Sky Muse", a voice we designed for the demo with ElevenLabs Voice Design; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and
+it is optional: without an ElevenLabs key the questions are shown, not spoken. "Story Sky Muse" lives in Scribsy's ElevenLabs
+workspace, so with your own key set `ELEVENLABS_VOICE_ID` to one of your voices. The question text, which contains a few
 of the writer's words, is the only thing sent to ElevenLabs.
 
 ## Run it

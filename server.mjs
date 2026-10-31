@@ -19,9 +19,10 @@ const MODELS = { text: 'muse-spark-1.3', voice: 'muse-voice-transcribe-1.0', ima
 // Prices from dev.meta.ai/docs/pricing-rate-limits (31 Oct 2026). The cap stops this server well inside the $150 credits.
 const PRICE = { inTok: 1.25 / 1e6, outTok: 4.25 / 1e6, audioHour: 0.18, image: 0.01 };
 const SPEND_CAP_USD = Number(process.env.SPEND_CAP_USD ?? 15);
-// The voice: ElevenLabs reads the question aloud, nothing else. Lily is a soft, velvety stock voice: the muse.
+// The voice: ElevenLabs reads the question aloud, nothing else. "Story Sky Muse" is a voice designed for this demo
+// with ElevenLabs Voice Design: airy, ageless, unhurried. Set ELEVENLABS_VOICE_ID to use any other voice.
 const XI_KEY = process.env.ELEVENLABS_API_KEY ?? '';
-const XI_VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'pFZP5JQG7iQjIQuC4Bku';
+const XI_VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'cTLtc9FcFdsMXKOrrC79';
 // Eleven v4 Turbo: the expressive real-time model. The style is an audio tag (not spoken) that sets a muse's delivery.
 const XI_MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_v4_turbo';
 const XI_STYLE = process.env.ELEVENLABS_STYLE ?? '[softly, curious]';

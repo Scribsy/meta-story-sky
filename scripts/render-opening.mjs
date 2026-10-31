@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 
 // The bracketed audio tag directs the delivery (Eleven v4 does not speak it); the ellipsis gives the line a breath.
 const TEXT = '[softly, hushed and reverent] What’s the first thing… you see?';
-const VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'pFZP5JQG7iQjIQuC4Bku';
+const VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'cTLtc9FcFdsMXKOrrC79';
 const MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_v4';
 const key = process.env.ELEVENLABS_API_KEY;
 if (!key) throw new Error('Set ELEVENLABS_API_KEY.');
