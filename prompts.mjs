@@ -76,8 +76,10 @@ export function skyPrompt(cards, { gentle = false, hints = null } = {}) {
   return [
     // The framing matters to the image filter as much as to the look: this is a gentle picture of someone's invented story.
     'A charming storybook illustration for a novelist\'s fictional story idea, in the style of a whimsical picture-book',
-    'star atlas: a wide, quiet night sky over a dark horizon, deep indigo, fine silver stars, soft nebula glow,',
-    `${Math.max(3, gentle ? cards.length : motifs.length)} brighter stars forming one loose constellation across the centre.`,
+    'star atlas: a wide, quiet night sky over a dark horizon, deep indigo, fine silver stars, soft nebula glow.',
+    // The page draws the constellation and its names on top, so the painting must not draw one of its own.
+    'Keep the middle band of the sky open and calm: no constellation, no lines joining stars, no star larger or',
+    'brighter than the rest.',
     motifs.length ? `Soft, friendly silhouettes in the clouds and on the horizon hint at the story's imagined motifs: ${motifs.join('; ')}.` : '',
     questions ? 'One small patch of the sky is still dark and unmapped, waiting.' : '',
     'Wondrous and cosy rather than frightening: nothing graphic, no gore. No text, no letters, no labels, no people\'s',

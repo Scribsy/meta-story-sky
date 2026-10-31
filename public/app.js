@@ -2,6 +2,7 @@
 import { toWav16k } from './lib/wav.mjs';
 import { spot } from './lib/spot.mjs';
 import { rulesQuestion } from './lib/verify.mjs';
+import { placeLabels } from './lib/layout.mjs';
 
 const $ = (s) => document.querySelector(s);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -404,20 +405,21 @@ function drawConstellation(kept) {
       const x = W / 2 + Math.sin(t * Math.PI * 2.2 + 0.4) * 120 + (hash(c.label) - 0.5) * 60;
       return { c, x, y: 120 + t * (H - 360) };
     }
-    const x = 260 + t * (W - 520) + (hash(c.label) - 0.5) * 100;
-    const y = H * 0.48 + Math.sin(t * Math.PI * 1.6 + 0.6) * H * 0.2 + (hash(`${c.label}y`) - 0.5) * 140;
+    // Neighbours alternate a little up and down, so their names have room above and below.
+    const x = 220 + t * (W - 440) + (hash(c.label) - 0.5) * 60;
+    const y = H * 0.44 + Math.sin(t * Math.PI * 1.6 + 0.6) * H * 0.18 + (i % 2 ? 1 : -1) * H * 0.07;
     return { c, x, y };
   });
   const lines = pts.slice(1).map((p, i) => `<line class="fil" x1="${pts[i].x}" y1="${pts[i].y}" x2="${p.x}" y2="${p.y}" style="animation-delay:${i * 0.25}s"/>`).join('');
-  const stars = pts.map((p, i) => {
+  const marks = pts.map((p) => ({ ...p, r: p.c.kind === 'question' ? 9 : p.c.kind === 'person' || p.c.kind === 'name' ? 12 : 10, text: short(p.c.label) }));
+  const spots = placeLabels(marks, { W, H, fs: tall ? 40 : 34 });
+  const stars = marks.map((p, i) => {
     const q = p.c.kind === 'question';
-    const r = q ? 9 : p.c.kind === 'person' || p.c.kind === 'name' ? 12 : 10;
-    const anchor = tall || (p.x >= 420 && p.x <= W - 420) ? 'middle' : p.x < 420 ? 'start' : 'end';
-    const dx = anchor === 'start' ? -24 : anchor === 'end' ? 24 : 0;
+    const s = spots[i];
     return `<g class="star k-${p.c.kind}" style="animation-delay:${0.3 + i * 0.25}s">
-      <circle class="halo" cx="${p.x}" cy="${p.y}" r="${r * 3.2}"/>
-      <circle class="core${q ? ' open' : ''}" cx="${p.x}" cy="${p.y}" r="${r}"/>
-      <text x="${p.x}" y="${p.y + r + 38}" text-anchor="${anchor}" dx="${dx}">${esc(q || tall ? short(p.c.label) : p.c.label)}</text>
+      <circle class="halo" cx="${p.x}" cy="${p.y}" r="${p.r * 3.2}"/>
+      <circle class="core${q ? ' open' : ''}" cx="${p.x}" cy="${p.y}" r="${p.r}"/>
+      <text x="${s.x}" y="${s.y}" text-anchor="${s.anchor}">${esc(p.text)}</text>
     </g>`;
   }).join('');
   $('#sky-svg').innerHTML = lines + stars;

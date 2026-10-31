@@ -123,3 +123,26 @@ test('questionText only fills known templates', async () => {
   assert.equal(questionText('where_is', 'Hollow Isle'), 'And where is Hollow Isle?');
   assert.equal(questionText('say_anything', 'hi'), null);
 });
+
+test('star names never overlap each other, even when the stars crowd together', async () => {
+  const { placeLabels, textWidth } = await import('../public/lib/layout.mjs');
+  const names = ['A boy', 'his dog', 'the central United States', 'an apocalyptic wasteland', 'holes', 'monsters',
+    'four-headed spiders', 'fire breathing dragons', 'Another dimension or anoth…', 'snakes the size of a bus'];
+  const W = 1792; const H = 1024; const fs = 34;
+  const stars = names.map((text, i) => ({ x: 220 + (i / 9) * (W - 440), y: H * 0.44 + Math.sin(i) * 120 + (i % 2 ? 72 : -72), r: 11, text }));
+  const spots = placeLabels(stars, { W, H, fs });
+  const boxes = spots.map((s, i) => {
+    const w = textWidth(names[i], fs);
+    const x1 = s.anchor === 'start' ? s.x : s.anchor === 'end' ? s.x - w : s.x - w / 2;
+    return { x1, x2: x1 + w, y1: s.y - fs * 0.8, y2: s.y + fs * 0.25 };
+  });
+  for (let i = 0; i < boxes.length; i++) {
+    const a = boxes[i];
+    assert.ok(a.x1 >= 0 && a.x2 <= W && a.y1 >= 0 && a.y2 <= H, `${names[i]} stays inside the sky`);
+    for (let j = i + 1; j < boxes.length; j++) {
+      const b = boxes[j];
+      const hit = a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2;
+      assert.ok(!hit, `${names[i]} overlaps ${names[j]}`);
+    }
+  }
+});
