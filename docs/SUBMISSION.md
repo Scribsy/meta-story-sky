@@ -44,7 +44,10 @@ chooses from is Scribsy's; this take on it was written fresh. The README lists e
 
 **What's next**
 Testing with novelists whether verified, writer-chosen cards are a better start to a book than a blank page, and
-whether the idea belongs in Scribsy itself.
+whether the idea belongs in Scribsy itself. The first step is already built here and switched off: a consented,
+one-time hand-off ("Keep this story in Scribsy"), which packages the run with every quote re-checked against the
+writer's words and holds it for 24 hours so a new Scribsy account could import it as a braindump and story-bible
+entries. Nothing changes in the Scribsy app today; the import would be built after launch.
 
 **GitHub repo**
 https://github.com/Scribsy/meta-story-sky
