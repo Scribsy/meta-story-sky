@@ -102,6 +102,7 @@ export const TEMPLATES = {
   when_then: 'And when {X}, what happens?',
 };
 const MAX_SPAN_WORDS = 8;
+const WHAT_KIND_WORDS = 2;
 
 // "the brass key" and "brass key" are the same thing to ask about.
 const sameSpan = (a, b) => {
@@ -127,10 +128,17 @@ export function buildQuestion(transcript, pick, asked = []) {
   const template = TEMPLATES[pick.template];
   const span = bare(pick.template, String(pick.span ?? '').trim().replace(/[.,!?;:]+$/, ''));
   if (!template || !span) return null;
+  // what_kind says its span twice, which only sounds natural for a word or two ("what kind of dog is that dog?").
+  // A longer span keeps the model's choice of words and moves to a template that says it once.
+  if (pick.template === 'what_kind' && words(span).length > WHAT_KIND_WORDS) {
+    for (const t of ['anything_else', 'like_what']) {
+      const q = buildQuestion(transcript, { template: t, span: pick.span }, asked);
+      if (q) return q;
+    }
+    return null;
+  }
   const hits = findAll(transcript, span);
   if (!hits.length || words(span).length > MAX_SPAN_WORDS) return null;
-  // what_kind repeats the span, which only reads well for a short noun phrase.
-  if (pick.template === 'what_kind' && words(span).length > 3) return null;
   if (asked.some((a) => sameSpan(a.span, span))) return null;
   // Each question in a run uses a different template: a second "like what?" reads as a loop, not a conversation.
   if (asked.some((a) => a.template === pick.template)) return null;

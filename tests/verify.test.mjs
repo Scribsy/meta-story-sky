@@ -78,7 +78,15 @@ test('the question is a fixed template around the writer\'s exact span', () => {
   assert.equal(buildQuestion(T, { template: 'what_kind', span: 'bell' }).text, 'And what kind of bell is that bell?');
   assert.equal(buildQuestion(T, { template: 'anything_else', span: 'the silver key' }), null);
   assert.equal(buildQuestion(T, { template: 'tell_me_more', span: 'the bell' }), null);
-  assert.equal(buildQuestion(T, { template: 'what_kind', span: 'who rang the bell the night' }), null);
+  // A long span never goes into "what kind of": the same words are asked about with a template that says them once.
+  assert.equal(buildQuestion(T, { template: 'what_kind', span: 'who rang the bell the night' }).text,
+    'And is there anything else about who rang the bell the night?');
+  const mind = 'She hides in a virtual mind space.';
+  assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'virtual mind space' }).text,
+    'And is there anything else about virtual mind space?');
+  assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'virtual mind space' }, [{ template: 'anything_else', span: 'She' }]).text,
+    'And that’s virtual mind space like what?');
+  assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'mind space' }).text, 'And what kind of mind space is that mind space?');
 });
 
 test('rules spot names, places and the open question', () => {
