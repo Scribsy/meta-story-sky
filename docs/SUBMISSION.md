@@ -45,13 +45,13 @@ Testing with novelists whether verified, writer-chosen cards are a better start 
 whether the idea belongs in Scribsy itself.
 
 **GitHub repo**
-https://github.com/Scribsy/meta-story-sky  ← confirm after the repo is created
+https://github.com/Scribsy/meta-story-sky
 
 **Demo video**
 (Unlisted YouTube or Loom link, 3:00 or less)
 
 **Live demo**
-https://scribsy.github.io/meta-story-sky/  ← replay mode only (no key on a static page); confirm after Pages is on.
+https://scribsy.github.io/meta-story-sky/ (replay mode: a static page holds no key; the recorded run appears once credits land)
 To run it live: `META_MODEL_API_KEY=... node server.mjs`.
 
 **Team**

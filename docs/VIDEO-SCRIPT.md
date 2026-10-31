@@ -3,7 +3,7 @@
 **Steven's time: about 20 minutes.** 5 to read this, 5 for one practice run, 10 to record (two takes).
 
 **Before recording**
-- Start the live server: `doppler run -- node server.mjs`, open http://localhost:5177 in Chrome, full screen (F11),
+- Start the live server with the key in its environment (`META_MODEL_API_KEY=... node server.mjs`), open http://localhost:5177 in Chrome, full screen (F11),
   zoom 110%.
 - Record the screen and your mic with **Win + Alt + R** (Xbox Game Bar), or Clipchamp's screen recorder.
 - Have your story idea in your head, not on paper: about 45 seconds, with at least two names, one place, one object
