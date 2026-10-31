@@ -78,8 +78,18 @@ export const TEMPLATES = {
 };
 const MAX_SPAN_WORDS = 8;
 
-/** Build the one question, or null. The span must be the writer's exact words. */
-export function buildQuestion(transcript, pick) {
+const sameSpan = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** Fill a template with a span. Used by the page and by the server's voice, so only these questions are ever spoken. */
+export function questionText(template, span) {
+  return TEMPLATES[template] ? TEMPLATES[template].replaceAll('{X}', span) : null;
+}
+
+/**
+ * Build one question, or null. The span must be the writer's exact words, and the question must not repeat an earlier
+ * one in this conversation (`asked`: [{ template, span }]): no span is asked about twice.
+ */
+export function buildQuestion(transcript, pick, asked = []) {
   if (!pick) return null;
   const template = TEMPLATES[pick.template];
   const span = String(pick.span ?? '').trim().replace(/[.,!?;:]+$/, '');
@@ -88,15 +98,30 @@ export function buildQuestion(transcript, pick) {
   if (!hits.length || words(span).length > MAX_SPAN_WORDS) return null;
   // what_kind repeats the span, which only reads well for a short noun phrase.
   if (pick.template === 'what_kind' && words(span).length > 3) return null;
-  return { template: pick.template, span, start: hits[0].start, end: hits[0].end, text: template.replaceAll('{X}', span) };
+  if (asked.some((a) => sameSpan(a.span, span))) return null;
+  const at = hits[hits.length - 1];
+  return { template: pick.template, span, start: at.start, end: at.end, text: questionText(pick.template, span) };
 }
 
-/** The question when no model picked one: about the writer's own open question first, else about a name. */
-export function rulesQuestion(transcript, cards) {
-  const unknown = cards.find((c) => c.kind === 'question');
-  const span = unknown?.quote.match(/\b(?:who|why|what|where|how)(?:\s+[^\s.?!,]+){1,3}/i)?.[0];
-  const q = span && buildQuestion(transcript, { template: 'anything_else', span });
-  if (q) return q;
-  const named = cards.find((c) => c.kind !== 'question');
-  return named ? buildQuestion(transcript, { template: 'anything_else', span: named.label }) : null;
+/**
+ * The question when no model picked one, preferring what the writer said most recently (at or after `from`): their own
+ * open question first, then a place, then any other card. Never repeats a span.
+ */
+export function rulesQuestion(transcript, cards, asked = [], from = 0) {
+  const recent = [...cards.filter((c) => c.start >= from), ...cards.filter((c) => c.start < from)];
+  const picks = [];
+  for (const c of recent.filter((x) => x.kind === 'question')) {
+    const span = c.quote.match(/\b(?:who|why|what|where|how)(?:\s+[^\s.?!,]+){1,3}/i)?.[0];
+    if (span) picks.push({ template: 'anything_else', span });
+  }
+  for (const c of recent.filter((x) => x.kind !== 'question')) {
+    if (c.kind === 'place') picks.push({ template: 'where_is', span: c.label });
+    if (c.kind === 'thing') picks.push({ template: 'what_kind', span: c.label.replace(/^(the|a|an)\s+/i, '') });
+    picks.push({ template: 'anything_else', span: c.label });
+  }
+  for (const p of picks) {
+    const q = buildQuestion(transcript, p, asked);
+    if (q) return q;
+  }
+  return null;
 }

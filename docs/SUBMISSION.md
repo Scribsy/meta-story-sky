@@ -7,7 +7,7 @@ submits it himself. Field names below are our best guess at the form's; paste th
 Story Sky by Scribsy
 
 **Tagline (one line)**
-Say your story idea out loud; Meta's Muse models turn it into a verified story bible and paint your story's sky.
+Start a story out loud: Meta's Muse models listen, ask back in your own words, and turn it into a verified story bible and your story's sky.
 
 **Track**
 Startups
@@ -16,28 +16,30 @@ Startups
 Build for Your World
 
 **Description**
-Every novel starts as a mess in a writer's head. Story Sky lets a novelist speak their idea for a minute and hands it
-back as the start of a story bible, in their own words. Muse Voice Transcribe writes down what they said. Muse Spark
-points at the people, places, things and open questions already in it, and every card carries an exact quote that the
-page verifies mechanically: the quote must be an exact substring of the transcript (shown with its character offsets),
-or the card is thrown away, visibly. A name only becomes a person or a place when the writer said something that shows
-it; otherwise it stays a neutral Name. Then Story Sky asks one follow-up question built only from the writer's words: a
-published Clean Language question around a span the model picks and the page checks. It never answers. The writer
-taps the cards that are theirs, and Muse Image paints a night sky with the kept cards as its constellation. The model
-proposes; the writer's words decide.
+The blank page is the hardest part of a novel. Story Sky starts a story as a short spoken conversation. It asks one easy
+question out loud ("What's the first thing you see?"), and the writer answers in a sentence. Muse Voice Transcribe
+writes it down. Muse Spark points at the people, places, things and open questions already in it, and every card
+carries an exact quote that the page verifies mechanically: the quote must be an exact substring of the transcript
+(shown with its character offsets), or the card is thrown away, visibly. A name only becomes a person or a place when
+the writer said something that shows it; otherwise it stays a neutral Name. Then Story Sky asks back, up to three times,
+each question a published Clean Language question around the writer's own words, which the model picks and the page
+checks. It never asks about the same words twice and never answers or suggests anything. The writer answers out loud
+and the cards grow. At the end they tap the cards that belong to their story, and Muse Image paints a night sky with
+those cards as its constellation. The model proposes; the writer's words decide.
 
 **How we used Meta's models**
-- Muse Voice Transcribe (`muse-voice-transcribe-1.0`, `/v1/asr/transcribe`): the spoken idea, recorded in the browser
-  and sent as 16 kHz WAV.
+- Muse Voice Transcribe (`muse-voice-transcribe-1.0`, `/v1/asr/transcribe`): every spoken answer, recorded in the
+  browser and sent as 16 kHz WAV.
 - Muse Spark (`muse-spark-1.3`, chat completions with a strict JSON schema): proposes cards (kind, label, exact quote,
-  clue) and picks one question template and span.
+  clue) after each answer, and picks the next question's template and span, preferring the latest answer.
 - Muse Image (`muse-image-1.0`): paints the sky behind the kept cards.
-A full run costs about two cents.
+A full three-round run costs about five cents. The questions are spoken by ElevenLabs (Meta's API has no
+text-to-speech); the server only ever speaks a filled-in template question, and the voice is optional.
 
 **What was built during the hackathon**
 All of it. The repository was started on 31 Oct 2026 and contains only code written during the hackathon: the
-verifier, the rules-only spotter, the prompts and schema, the server, the recording and WAV encoder, the page and the
-tests. No Scribsy app code is included, and nothing in the Scribsy app changes. The idea of a story bible the writer
+verifier, the rules-only spotter, the prompts and schema, the server, the recording and WAV encoder, the spoken
+questions, the page and the tests. No Scribsy app code is included, and nothing in the Scribsy app changes. The idea of a story bible the writer
 chooses from is Scribsy's; this take on it was written fresh. The README lists each file.
 
 **What's next**
@@ -51,8 +53,8 @@ https://github.com/Scribsy/meta-story-sky
 (Unlisted YouTube or Loom link, 3:00 or less)
 
 **Live demo**
-https://scribsy.github.io/meta-story-sky/ (replay mode: a static page holds no key; the recorded run appears once credits land)
-To run it live: `META_MODEL_API_KEY=... node server.mjs`.
+https://scribsy.github.io/meta-story-sky/ (no server behind it: "Play a recorded run" plays a real live run; typing runs the
+rules-only version in the browser). To run it live: `META_MODEL_API_KEY=... ELEVENLABS_API_KEY=... node server.mjs`.
 
 **Team**
 Steven (Scribsy founder). Add your full name as on your CV profile, and anyone else who worked on it.

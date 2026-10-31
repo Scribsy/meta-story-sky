@@ -84,3 +84,21 @@ test('missedNames adds only what the model did not cover', () => {
 test('rulesQuestion asks about the writer\'s own open question first', () => {
   assert.equal(rulesQuestion(T, spot(T)).text, 'And is there anything else about who rang the bell?');
 });
+
+test('no span is asked about twice', () => {
+  const asked = [{ template: 'anything_else', span: 'the brass key' }];
+  assert.equal(buildQuestion(T, { template: 'what_kind', span: 'the brass key' }, asked), null);
+  assert.ok(buildQuestion(T, { template: 'where_is', span: 'Hollow Isle' }, asked));
+});
+
+test('rulesQuestion prefers the latest answer and skips what was asked', () => {
+  const from = T.indexOf(S3);
+  const q = rulesQuestion(T, spot(T), [{ template: 'anything_else', span: 'who rang the bell' }], from);
+  assert.equal(q.span, 'Inspector Calloway');
+});
+
+test('questionText only fills known templates', async () => {
+  const { questionText } = await import('../public/lib/verify.mjs');
+  assert.equal(questionText('where_is', 'Hollow Isle'), 'And where is Hollow Isle?');
+  assert.equal(questionText('say_anything', 'hi'), null);
+});

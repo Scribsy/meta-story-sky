@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Story Sky · Scribsy</title>
-  <meta name="description" content="Speak a story idea. Meta's Muse models find what's already in it, check every word against what you said, ask one question, and paint your story's sky.">
+  <meta name="description" content="Start a story out loud. Meta's Muse models listen, find what's already in it, check every word against what you said, ask back in your own words, and paint your story's sky.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css">
@@ -13,42 +13,49 @@
   <canvas id="stars" aria-hidden="true"></canvas>
   <header class="top">
     <span class="brand">Scribsy<span class="dot">.</span></span>
-    <span id="mode" class="mode" role="status"></span>
+    <span class="top-r">
+      <button id="mute" class="chip" type="button" aria-pressed="false" hidden>Voice on</button>
+      <span id="mode" class="mode" role="status"></span>
+    </span>
   </header>
 
   <main>
-    <!-- 1 Talk -->
-    <section id="talk" class="frame active" aria-labelledby="talk-h">
-      <h1 id="talk-h">Tell me about the story you keep coming back to.</h1>
-      <p class="sub">Say it out loud, rough and unfinished. About a minute is plenty.</p>
+    <!-- 0 Title -->
+    <section id="title" class="frame active" aria-labelledby="title-h">
+      <h1 id="title-h" class="title">Story Sky</h1>
+      <p class="sub">Start a story out loud. A few short answers, in your own words, and your story gets its first stars.</p>
+      <div class="row center">
+        <button id="begin" class="primary" type="button">Begin →</button>
+      </div>
+      <div class="alts">
+        <button id="replay" class="link" type="button">Play a recorded run</button>
+      </div>
+    </section>
+
+    <!-- 1 Talk: the first, easy question -->
+    <section id="talk" class="frame" aria-labelledby="talk-h">
+      <h1 id="talk-h">What's the first thing you see?</h1>
+      <p class="sub">A person, a place, a moment. One sentence is enough. Say it out loud.</p>
       <button id="mic" class="mic" type="button" aria-pressed="false">
-        <span class="mic-ring"></span><span id="mic-label">Tap to talk</span>
+        <span class="mic-ring"></span><span class="mic-label">Tap to talk</span>
       </button>
       <p id="mic-time" class="hint" aria-live="polite"></p>
       <div class="alts">
         <button id="type-open" class="link" type="button">Type it instead</button>
-        <span aria-hidden="true">·</span>
-        <button id="replay" class="link" type="button">Play a recorded run</button>
       </div>
       <form id="type-form" class="type-form" hidden>
-        <label for="type-text" class="sr">Your story idea</label>
-        <textarea id="type-text" rows="5" placeholder="Wren runs the night ferry to Hollow Isle…"></textarea>
+        <label for="type-text" class="sr">What you see</label>
+        <textarea id="type-text" rows="4" placeholder="Wren runs the night ferry to Hollow Isle…"></textarea>
         <button class="primary" type="submit">Use these words →</button>
       </form>
     </section>
 
-    <!-- 2 Your words -->
-    <section id="words" class="frame" aria-labelledby="words-h">
-      <p class="eyebrow" id="words-h">What you said <span id="words-by" class="by"></span></p>
-      <div id="transcript" class="transcript" tabindex="0"></div>
-      <button id="reveal" class="primary" type="button">Show me what's there →</button>
-    </section>
-
-    <!-- 3 Reveal, question and keep: one surface -->
+    <!-- 2 The conversation: your words, the cards, one question at a time -->
     <section id="board" class="frame" aria-labelledby="board-h">
       <p class="eyebrow" id="board-h">Found in what you said <span id="board-by" class="by"></span></p>
       <h2 id="board-title">Look what's already there.</h2>
-      <p id="check" class="check"></p>
+      <div id="transcript" class="transcript" tabindex="0"></div>
+      <p id="check" class="check" aria-live="polite"></p>
       <div id="cards" class="cards" role="list"></div>
       <details id="dropped" class="dropped" hidden>
         <summary></summary>
@@ -56,25 +63,31 @@
       </details>
 
       <div id="ask" class="ask" hidden>
-        <p class="eyebrow">One question</p>
+        <p class="eyebrow"><span id="ask-round"></span> <span id="ask-by" class="by"></span></p>
         <p id="ask-q" class="ask-q"></p>
-        <form id="ask-form">
-          <label for="ask-a" class="sr">Your answer</label>
-          <input id="ask-a" autocomplete="off" placeholder="Answer if you like. A few words is fine.">
-          <div class="row">
-            <button class="primary" type="submit">Add ↵</button>
-            <button id="ask-skip" class="ghost" type="button">Skip</button>
-          </div>
-        </form>
+        <div class="answer">
+          <button id="ask-mic" class="mic small" type="button" aria-pressed="false">
+            <span class="mic-ring"></span><span class="mic-label">Answer out loud</span>
+          </button>
+          <form id="ask-form">
+            <label for="ask-a" class="sr">Your answer</label>
+            <input id="ask-a" autocomplete="off" placeholder="Or type. A few words is fine.">
+            <div class="row">
+              <button class="ghost" type="submit">Add ↵</button>
+              <button id="ask-skip" class="link" type="button">Skip this one</button>
+            </div>
+          </form>
+        </div>
+        <p id="ask-time" class="hint" aria-live="polite"></p>
       </div>
 
-      <div id="keep" class="keep" hidden>
-        <p class="keep-h">Tap the cards that belong to your story.</p>
-        <button id="keep-go" class="primary" type="button">Keep all →</button>
+      <div id="keep" class="keep">
+        <p class="keep-h" id="keep-h">Tap the cards that belong to your story.</p>
+        <button id="keep-go" class="primary" type="button">Show my sky →</button>
       </div>
     </section>
 
-    <!-- 4 Sky -->
+    <!-- 3 Sky -->
     <section id="sky" class="frame" aria-labelledby="sky-h">
       <p class="eyebrow" id="sky-h">Your story's sky</p>
       <figure class="sky">
@@ -89,9 +102,11 @@
   </main>
 
   <footer class="foot">
-    Built for the Meta Global AI Developer Hackathon on <b>Muse Voice Transcribe</b>, <b>Muse Spark</b> and <b>Muse Image</b>.
-    A standalone demo; nothing here changes the Scribsy app.
+    Built for the Meta Global AI Developer Hackathon. Listening, reading and painting by <b>Muse Voice Transcribe</b>,
+    <b>Muse Spark</b> and <b>Muse Image</b>; the spoken questions by ElevenLabs. A standalone demo; nothing here changes the
+    Scribsy app.
   </footer>
+  <audio id="voice" preload="none"></audio>
   <script type="module" src="app.js"></script>
 </body>
 </html>

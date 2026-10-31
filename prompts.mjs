@@ -21,7 +21,8 @@ Then choose ONE follow-up question. You do not write it. Pick a template id and 
 - come_from: "And where could {X} come from?"
 - when_then: "And when {X}, what happens?"  (X is a short event in the writer's words)
 The span must be copied exactly from the transcript, at most 8 words, and read naturally inside the template. Prefer
-the thing the writer seems most alive about or least sure of.`;
+the thing the writer seems most alive about or least sure of. This is a conversation in rounds: when a LATEST ANSWER is
+given, ask about something in it if you can, and never pick a span listed under ALREADY ASKED.`;
 
 const STR = { type: 'string' };
 export const REVEAL_SCHEMA = {
