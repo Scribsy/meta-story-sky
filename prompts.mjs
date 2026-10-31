@@ -14,14 +14,15 @@ Rules for every card:
 Give at most 10 cards, the ones the writer would most want to keep.
 
 Then choose ONE follow-up question. You do not write it. Pick a template id and a span:
-- anything_else: "And is there anything else about {X}?"  (good for something the writer doesn't know yet)
-- what_kind: "And what kind of {X} is that {X}?"  (X is said twice, so only a bare noun of one or two words, e.g.
-  "dog", "brass key"; never a longer phrase)
-- where_is: "And where is {X}?"
-- like_what: "And that's {X} like what?"
-- come_from: "And where could {X} come from?"
-- when_then: "And when {X}, what happens?"  (X is a short event in the writer's words)
-The span must be copied exactly from the transcript, at most 8 words, and read naturally inside the template. Prefer
+- anything_else: "And is there anything else about {X}?"  (X: a noun phrase, or the writer's own open question)
+- what_kind: "And what kind of {X} is that {X}?"  (X is said twice: a bare noun of one or two words, e.g. "dog")
+- where_is: "And where is {X}?"  (X: a noun phrase for a thing or place, no verb)
+- like_what: "And that's {X} like what?"  (X: a noun or a quality, e.g. "nightmares", "razor sharp")
+- come_from: "And where could {X} come from?"  (X: a noun phrase, no verb)
+- when_then: "And when {X}, what happens?"  (X: something happening, with its verb, e.g. "he absorbs powers")
+The span must be copied exactly from the transcript, at most 8 words, and must be a complete phrase that fits its
+template's slot as described (never stop mid-phrase, never put a clause where a noun goes). The app hands "I/my" back
+as "you/your" and "a/an" as "that", so pick the span as the writer said it. Prefer
 the thing the writer seems most alive about or least sure of. This is a conversation in rounds: when a LATEST ANSWER is
 given, ask about something in it if you can, never pick a span listed under ALREADY ASKED, and never use a template
 listed there again: each question in the conversation uses a different template.`;

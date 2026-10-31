@@ -94,7 +94,7 @@ export function createApi(env, meter) {
     const extra = missedNames(transcript, cards);
     const all = [...cards, ...extra];
     const question = buildQuestion(transcript, proposal.question, asked) ?? rulesQuestion(transcript, all, asked, from);
-    return { source: 'model', model: MODELS.text, cards: all, added: extra.length, dropped, proposed: proposal.cards?.length ?? 0, question, ms: Date.now() - started };
+    return { source: 'model', model: MODELS.text, cards: all, added: extra.length, dropped, proposed: proposal.cards?.length ?? 0, question, pick: proposal.question ?? null, ms: Date.now() - started };
   }
 
   /** ElevenLabs speaks a question built from a known template, so the voice can only ever ask, never answer. */
