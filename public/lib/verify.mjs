@@ -103,11 +103,19 @@ export const TEMPLATES = {
 };
 const MAX_SPAN_WORDS = 8;
 
-const sameSpan = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+// "the brass key" and "brass key" are the same thing to ask about.
+const sameSpan = (a, b) => {
+  const norm = (s) => s.trim().toLowerCase().replace(/^(?:a|an|the|this|that|these|those|his|her|their|its|my|our|your|some)\s+/, '');
+  return norm(a) === norm(b);
+};
+
+// "What kind of X is that X?" takes the bare noun: "what kind of dog is that dog?", never "of a dog is that a dog?".
+const LEADING = /^(?:a|an|the|this|that|these|those|his|her|their|its|my|our|your|some)\s+/i;
+const bare = (template, span) => (template === 'what_kind' ? span.replace(LEADING, '') : span);
 
 /** Fill a template with a span. Used by the page and by the server's voice, so only these questions are ever spoken. */
 export function questionText(template, span) {
-  return TEMPLATES[template] ? TEMPLATES[template].replaceAll('{X}', span) : null;
+  return TEMPLATES[template] ? TEMPLATES[template].replaceAll('{X}', bare(template, span)) : null;
 }
 
 /**
@@ -117,7 +125,7 @@ export function questionText(template, span) {
 export function buildQuestion(transcript, pick, asked = []) {
   if (!pick) return null;
   const template = TEMPLATES[pick.template];
-  const span = String(pick.span ?? '').trim().replace(/[.,!?;:]+$/, '');
+  const span = bare(pick.template, String(pick.span ?? '').trim().replace(/[.,!?;:]+$/, ''));
   if (!template || !span) return null;
   const hits = findAll(transcript, span);
   if (!hits.length || words(span).length > MAX_SPAN_WORDS) return null;

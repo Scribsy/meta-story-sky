@@ -105,6 +105,17 @@ test('no span is asked about twice', () => {
   assert.ok(buildQuestion(T, { template: 'where_is', span: 'Hollow Isle' }, asked));
 });
 
+test('"what kind of" takes the bare noun, still the writer\'s exact words', async () => {
+  const { questionText } = await import('../public/lib/verify.mjs');
+  const t = 'A boy and a dog walking through the wasteland. His dog limps.';
+  const q = buildQuestion(t, { template: 'what_kind', span: 'a dog' });
+  assert.equal(q.text, 'And what kind of dog is that dog?');
+  assert.equal(t.slice(q.start, q.end), 'dog');
+  assert.equal(buildQuestion(t, { template: 'what_kind', span: 'His dog' }).text, 'And what kind of dog is that dog?');
+  assert.equal(questionText('what_kind', 'the wasteland'), 'And what kind of wasteland is that wasteland?');
+  assert.equal(questionText('like_what', 'a dog'), 'And that’s a dog like what?');
+});
+
 test('no template is used twice in a run, and the rules pick another', () => {
   const asked = [{ template: 'like_what', span: 'the night ferry' }];
   assert.equal(buildQuestion(T, { template: 'like_what', span: 'the brass key' }, asked), null);
