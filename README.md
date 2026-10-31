@@ -56,8 +56,10 @@ Meta's models do all the listening, reading and painting:
 | Cards and the next question | `muse-spark-1.3`, structured output (JSON schema) | `POST /v1/chat/completions` |
 | Sky | `muse-image-1.0` | `POST /v1/images/generations` |
 
-All three are called through the [Meta Model API](https://dev.meta.ai/products/meta-model-api). A full three-round run
-costs about five cents.
+All three are called through the [Meta Model API](https://dev.meta.ai/products/meta-model-api). Muse Spark runs at
+`reasoning_effort: minimal` (set `REASONING_EFFORT` to change it): finding quotes in a short transcript needs little
+reasoning, and it keeps each reveal to about five seconds. A full three-round run, sky included, cost about four cents
+in testing.
 
 The only other service is the voice: Meta's API has no text-to-speech, so **ElevenLabs** reads each question aloud
 (Eleven v4 Turbo with a soft audio-tag direction, in "Story Sky Muse", a voice we designed for the demo with ElevenLabs Voice Design; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and

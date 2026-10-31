@@ -51,10 +51,24 @@ test('an invented clue does not count', () => {
   assert.equal(cards[0].clue, '');
 });
 
+test('a whole-answer quote is cut to the sentence holding the label, still exact', () => {
+  const { cards } = verifyCards(T, [{ kind: 'thing', label: 'the brass key', quote: T, clue: '' }]);
+  assert.equal(cards[0].quote, S3);
+  assert.equal(T.slice(cards[0].start, cards[0].end), S3);
+  const short = verifyCards(T, [{ kind: 'thing', label: 'the brass key', quote: S3, clue: '' }]).cards[0];
+  assert.equal(short.quote, S3);
+  const long = `On the ${'very '.repeat(30)}last night, by the ferry, Wren found the brass key, and she kept it.`;
+  const clause = verifyCards(long, [{ kind: 'thing', label: 'the brass key', quote: long, clue: '' }]).cards[0];
+  assert.equal(clause.quote, 'Wren found the brass key,');
+  assert.equal(long.slice(clause.start, clause.end), clause.quote);
+});
+
 test('clueKind reads prepositions and person words', () => {
   assert.equal(clueKind('Ash', 'to Ash'), 'place');
   assert.equal(clueKind('Wren', 'Wren and her dog'), 'person');
   assert.equal(clueKind('Wren', 'Wren runs the night ferry'), null);
+  assert.equal(clueKind('Squire Trelawney', ''), 'person');
+  assert.equal(clueKind('the Admiral Benbow Inn', ''), 'place');
 });
 
 test('the question is a fixed template around the writer\'s exact span', () => {

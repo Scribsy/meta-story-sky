@@ -2,11 +2,11 @@
 
 /** A word before a name that makes it a person ("Captain Reyes"). */
 export const TITLES = new Set(['Mr', 'Mrs', 'Ms', 'Dr', 'Sir', 'Lady', 'Lord', 'King', 'Queen', 'Captain', 'Professor',
-  'Inspector', 'Doctor', 'Aunt', 'Uncle']);
+  'Inspector', 'Doctor', 'Aunt', 'Uncle', 'Miss', 'Squire']);
 
 /** A word that makes a capitalised run a place ("Hollow Isle", "Mount Ash"). */
 export const PLACE_WORDS = new Set(['Street', 'Road', 'Island', 'Isle', 'River', 'Lake', 'Mount', 'Mountain', 'Forest',
-  'City', 'Town', 'Village', 'Bay', 'Harbour', 'Harbor', 'Castle', 'Hotel', 'Station', 'Bridge', 'Valley']);
+  'City', 'Town', 'Village', 'Bay', 'Harbour', 'Harbor', 'Castle', 'Hotel', 'Station', 'Bridge', 'Valley', 'Inn', 'Tavern']);
 
 /** Words in the clue that show a name is a person ("her uncle Bram", "Wren, who…"). */
 export const PERSON_CUES = new Set(['he', 'she', 'him', 'her', 'his', 'who', 'named', 'called', 'mother', 'father',

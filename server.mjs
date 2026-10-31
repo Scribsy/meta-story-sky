@@ -19,6 +19,9 @@ const MODELS = { text: 'muse-spark-1.3', voice: 'muse-voice-transcribe-1.0', ima
 // Prices from dev.meta.ai/docs/pricing-rate-limits (31 Oct 2026). The cap stops this server well inside the $150 credits.
 const PRICE = { inTok: 1.25 / 1e6, outTok: 4.25 / 1e6, audioHour: 0.18, image: 0.01 };
 const SPEND_CAP_USD = Number(process.env.SPEND_CAP_USD ?? 15);
+// Muse Spark reasons before it answers. Finding quotes in a short transcript needs little of it: at "minimal" a reveal
+// took about 5 s and under a cent in testing, against about 24 s and 3 cents at the model's own default.
+const REASONING = process.env.REASONING_EFFORT ?? 'minimal';
 // The voice: ElevenLabs reads the question aloud, nothing else. "Story Sky Muse" is a voice designed for this demo
 // with ElevenLabs Voice Design: airy, ageless, unhurried. Set ELEVENLABS_VOICE_ID to use any other voice.
 const XI_KEY = process.env.ELEVENLABS_API_KEY ?? '';
@@ -71,11 +74,13 @@ async function reveal(transcript, { from = 0, asked = [] } = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: MODELS.text,
+        reasoning_effort: REASONING,
         messages: [{ role: 'system', content: REVEAL_SYSTEM }, { role: 'user', content: revealInput(transcript, from, asked) }],
         response_format: { type: 'json_schema', json_schema: { name: 'reveal', schema: REVEAL_SCHEMA, strict: true } },
       }),
     });
     const u = out.usage ?? {};
+    console.log(`[story-sky] reveal tokens in ${u.prompt_tokens} out ${u.completion_tokens} (reasoning ${u.completion_tokens_details?.reasoning_tokens ?? '?'}), effort ${REASONING}`);
     await charge((u.prompt_tokens ?? 0) * PRICE.inTok + (u.completion_tokens ?? 0) * PRICE.outTok, 'reveal');
     proposal = JSON.parse(out.choices?.[0]?.message?.content ?? '{}');
   } catch (e) {
@@ -148,7 +153,7 @@ async function readBody(req, limit = 32 * 1024 * 1024) {
 
 const send = (res, status, body, type = 'application/json') => {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
-  res.end(type === 'application/json' ? JSON.stringify(body) : body);
+  res.end(type === 'application/json' && !Buffer.isBuffer(body) ? JSON.stringify(body) : body);
 };
 
 createServer(async (req, res) => {

@@ -30,6 +30,29 @@ export function clueKind(label, clue) {
   return null;
 }
 
+const LONG_QUOTE = 30;
+
+/**
+ * A quote longer than LONG_QUOTE words is cut to the sentence that holds the label (and a sentence that is still long,
+ * to its clause), so the proof points at the words that matter rather than a whole answer. The result is still an exact
+ * slice of the quote; `at` is where it starts.
+ */
+export function narrowQuote(quote, label) {
+  let at = 0;
+  for (const stop of [/[.?!\n]/, /[.?!\n,;:—]/]) {
+    const i = label ? quote.indexOf(label) : -1;
+    if (words(quote).length <= LONG_QUOTE || i < 0) break;
+    let start = 0;
+    for (let k = i - 1; k >= 0; k--) if (stop.test(quote[k])) { start = k + 1; break; }
+    while (/\s/.test(quote[start] ?? '')) start++;
+    let end = quote.length;
+    for (let k = i + label.length; k < quote.length; k++) if (stop.test(quote[k])) { end = k + 1; break; }
+    quote = quote.slice(start, end);
+    at += start;
+  }
+  return { quote, at };
+}
+
 /**
  * Check the model's cards. Returns { cards, dropped }. A kept card gains `start`/`end` (offsets of its quote in the
  * transcript) and `kindSource` ('model' | 'clue' | 'rule'); a dropped card says why.
@@ -61,7 +84,9 @@ export function verifyCards(transcript, modelCards) {
     const key = `${kind}:${card.label.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    cards.push({ ...card, kind, kindSource, start: hits[0].start, end: hits[0].end });
+    const { quote, at } = narrowQuote(card.quote, card.label);
+    const start = hits[0].start + at;
+    cards.push({ ...card, quote, kind, kindSource, start, end: start + quote.length });
   }
   return { cards, dropped };
 }
