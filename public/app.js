@@ -359,11 +359,23 @@ async function paintSky(kept) {
 
 function hash(s) { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; }
 
+// On a phone the sky is portrait: the painting is cropped to its middle and the stars run top to bottom.
+const portrait = matchMedia('(max-width: 600px)');
+portrait.addEventListener('change', () => { if (lastKept) drawConstellation(lastKept); });
+let lastKept = null;
+
 function drawConstellation(kept) {
-  const W = 1792; const H = 1024;
+  lastKept = kept;
+  const tall = portrait.matches;
+  const W = tall ? 900 : 1792; const H = tall ? 1200 : 1024;
+  $('#sky-svg').setAttribute('viewBox', `0 0 ${W} ${H}`);
   const n = kept.length;
   const pts = kept.map((c, i) => {
     const t = n === 1 ? 0.5 : i / (n - 1);
+    if (tall) {
+      const x = W / 2 + Math.sin(t * Math.PI * 2.2 + 0.4) * 120 + (hash(c.label) - 0.5) * 60;
+      return { c, x, y: 120 + t * (H - 360) };
+    }
     const x = 260 + t * (W - 520) + (hash(c.label) - 0.5) * 100;
     const y = H * 0.48 + Math.sin(t * Math.PI * 1.6 + 0.6) * H * 0.2 + (hash(`${c.label}y`) - 0.5) * 140;
     return { c, x, y };
@@ -372,12 +384,12 @@ function drawConstellation(kept) {
   const stars = pts.map((p, i) => {
     const q = p.c.kind === 'question';
     const r = q ? 9 : p.c.kind === 'person' || p.c.kind === 'name' ? 12 : 10;
-    const anchor = p.x < 420 ? 'start' : p.x > W - 420 ? 'end' : 'middle';
-    const dx = p.x < 420 ? -24 : p.x > W - 420 ? 24 : 0;
+    const anchor = tall || (p.x >= 420 && p.x <= W - 420) ? 'middle' : p.x < 420 ? 'start' : 'end';
+    const dx = anchor === 'start' ? -24 : anchor === 'end' ? 24 : 0;
     return `<g class="star k-${p.c.kind}" style="animation-delay:${0.3 + i * 0.25}s">
       <circle class="halo" cx="${p.x}" cy="${p.y}" r="${r * 3.2}"/>
       <circle class="core${q ? ' open' : ''}" cx="${p.x}" cy="${p.y}" r="${r}"/>
-      <text x="${p.x}" y="${p.y + r + 38}" text-anchor="${anchor}" dx="${dx}">${esc(q ? short(p.c.label) : p.c.label)}</text>
+      <text x="${p.x}" y="${p.y + r + 38}" text-anchor="${anchor}" dx="${dx}">${esc(q || tall ? short(p.c.label) : p.c.label)}</text>
     </g>`;
   }).join('');
   $('#sky-svg').innerHTML = lines + stars;

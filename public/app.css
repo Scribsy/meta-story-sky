@@ -155,8 +155,11 @@ mark.on { background: rgba(255, 217, 138, 0.32); border-bottom-style: solid; }
 .foot b { color: var(--dim); font-weight: 500; }
 
 @media (max-width: 600px) {
-  .top { padding: 14px 16px; }
-  .star text { font-size: 44px; }
+  .top { padding: 14px 16px; gap: 10px; }
+  .chip, .mode { white-space: nowrap; }
+  .mode { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
+  .sky { aspect-ratio: 3 / 4; }
+  .star text { font-size: 40px; }
   .keep { flex-direction: column; align-items: stretch; }
   .answer { grid-template-columns: 1fr; justify-items: center; }
   .answer form { width: 100%; }
