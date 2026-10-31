@@ -29,16 +29,40 @@ function show(id) {
 }
 function setMode(text, cls) { const m = $('#mode'); m.textContent = text; m.className = `mode ${cls}`; }
 
-async function init() {
-  try {
-    const s = await (await fetch('/api/status')).json();
-    state.live = s.live;
-    state.voice = s.voice;
-  } catch { state.live = false; }
-  setMode(state.live ? 'Live · Meta Model API' : 'No API key here · rules only', state.live ? 'live' : 'replay');
+// The hosted page asks for an access code before it calls Meta's models; the code rides along on every API call.
+const CODE_KEY = 'story-sky-code';
+let accessCode = '';
+try { accessCode = localStorage.getItem(CODE_KEY) ?? ''; } catch { /* storage blocked: ask again next time */ }
+const api = (path, init = {}) => fetch(path, { ...init, headers: { ...init.headers, ...(accessCode ? { 'x-access-code': accessCode } : {}) } });
+
+async function checkStatus() {
+  let s = {};
+  try { s = await (await api('/api/status')).json(); } catch { /* no server: the page runs on its own */ }
+  state.live = Boolean(s.live);
+  state.voice = Boolean(s.voice);
+  const locked = s.gated && !s.unlocked;
+  $('#code-form').hidden = !locked;
+  setMode(state.live ? 'Live · Meta Model API' : locked ? 'Recorded run or rules only' : 'No API key here · rules only', state.live ? 'live' : 'replay');
   $('#mute').hidden = !state.voice;
+  return s;
+}
+
+async function init() {
+  await checkStatus();
   if (new URLSearchParams(location.search).has('replay')) startReplay();
 }
+
+$('#code-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  accessCode = $('#code').value.trim();
+  const s = await checkStatus();
+  if (s.unlocked) {
+    try { localStorage.setItem(CODE_KEY, accessCode); } catch { /* fine: it lasts for this visit */ }
+  } else {
+    accessCode = '';
+    $('#code-note').textContent = 'That code didn’t work.';
+  }
+});
 
 $('#mute').addEventListener('click', () => {
   state.muted = !state.muted;
@@ -65,7 +89,7 @@ async function speakQuestion(q) {
   if (state.replay) return say(state.replay.rounds[state.replayRound + 1]?.questionAudio);
   if (!state.voice || state.muted) return;
   try {
-    const res = await fetch('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: q.template, span: q.span }) });
+    const res = await api('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: q.template, span: q.span }) });
     if (!res.ok) return;
     const blob = await res.blob();
     if (new URLSearchParams(location.search).has('record')) q.audioData = await blobToDataUrl(blob);
@@ -100,7 +124,7 @@ function recorderFor(button, noteEl) {
         note('Muse Voice Transcribe is writing down what you said…');
         try {
           const wav = await toWav16k(new Blob(chunks, { type: rec.mimeType }));
-          const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav });
+          const res = await api('/api/transcribe', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav });
           const out = await res.json();
           if (!res.ok) throw new Error(out.error);
           if (!out.transcript) throw new Error('No words came back. Try again a little closer to the mic.');
@@ -166,16 +190,18 @@ async function answer(text, by) {
   $('#check').textContent = state.live && !state.replay ? 'Muse Spark is reading…' : 'Reading…';
   try {
     let r;
+    const byRules = (error) => {
+      const cards = spot(state.transcript);
+      return { source: 'rules', error, cards, dropped: [], proposed: 0, question: rulesQuestion(state.transcript, cards, state.asked, from) };
+    };
     if (state.replay) { await sleep(800); r = state.replay.rounds[state.replayRound].reveal; }
     else if (state.live) {
-      const res = await fetch('/api/reveal', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const res = await api('/api/reveal', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcript: state.transcript, from, asked: state.asked }) });
       r = await res.json();
-      if (!res.ok) throw new Error(r.error);
-    } else {
-      const cards = spot(state.transcript);
-      r = { source: 'rules', cards, dropped: [], proposed: 0, question: rulesQuestion(state.transcript, cards, state.asked, from) };
-    }
+      // Refused (a budget is used up, say): the rules still give a reveal, and the page says why.
+      if (!res.ok) r = byRules(r.error);
+    } else r = byRules();
     state.run.rounds.at(-1).reveal = r;
     await playReveal(r);
   } catch (e) {
@@ -189,7 +215,7 @@ async function playReveal(r) {
   const ok = r.proposed - r.dropped.length;
   $('#check').innerHTML = r.source === 'model'
     ? `Muse Spark proposed <b>${r.proposed}</b> cards. <b>${ok}</b> quote you exactly, checked character by character${r.dropped.length ? `; <b>${r.dropped.length}</b> didn’t, so ${r.dropped.length === 1 ? 'it’s' : 'they’re'} gone` : ''}.${r.added > 0 ? ` The rules added <b>${r.added}</b> name${r.added > 1 ? 's' : ''} it missed.` : ''}`
-    : `<b>${r.cards.length}</b> found by rules alone, each quoting your words.`;
+    : `<b>${r.cards.length}</b> found by rules alone, each quoting your words.${r.error ? ` <span class="by">(${esc(String(r.error).slice(0, 140))})</span>` : ''}`;
   renderDropped(r.dropped);
   renderTranscript();
   const box = $('#cards');
@@ -338,7 +364,7 @@ async function paintSky(kept) {
     let out;
     if (state.replay) { await sleep(1200); out = state.replay.sky; }
     else if (state.live) {
-      const res = await fetch('/api/sky', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const res = await api('/api/sky', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cards: kept.map(({ kind, label }) => ({ kind, label })) }) });
       out = await res.json();
       if (!res.ok) throw new Error(out.error);

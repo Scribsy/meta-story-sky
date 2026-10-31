@@ -36,7 +36,9 @@ demo.
 | The quote, label, clue and span checker (exact substrings with offsets; unclued names stay neutral; no repeated questions) | [`public/lib/verify.mjs`](public/lib/verify.mjs) |
 | Rules-only spotting on the device, used when the model is unavailable and to add names the model missed | [`public/lib/spot.mjs`](public/lib/spot.mjs), [`public/lib/words.mjs`](public/lib/words.mjs) |
 | The prompt and JSON schema for Muse Spark, and the Muse Image prompt | [`prompts.mjs`](prompts.mjs) |
-| A small Node server that keeps the keys off the page, calls Muse Voice Transcribe, Muse Spark and Muse Image, speaks only template questions, and caps spend | [`server.mjs`](server.mjs) |
+| The API that keeps the keys off the page, calls Muse Voice Transcribe, Muse Spark and Muse Image, speaks only template questions, and asks a meter before every billed call | [`api.mjs`](api.mjs) |
+| A small Node server for running it locally | [`server.mjs`](server.mjs) |
+| The hosted version on Cloudflare Workers: the same API behind an access code, with daily caps kept in a Durable Object | [`worker.mjs`](worker.mjs), [`wrangler.jsonc`](wrangler.jsonc) |
 | In-browser recording and 16 kHz WAV encoding for Muse Voice Transcribe | [`public/lib/wav.mjs`](public/lib/wav.mjs) |
 | The page: the opening question, the rounds, keep, sky | [`public/`](public/) |
 | Tests | [`tests/`](tests/) |
@@ -87,6 +89,19 @@ npm test     # the verifier, the rules and the question builder
 
 The server never sends a key to the browser and never logs one. It stops calling Meta once a run passes
 `SPEND_CAP_USD` (default $15), and stops speaking after `ELEVENLABS_CHAR_CAP` characters (default 6,000).
+
+### The hosted live version
+
+`worker.mjs` runs the same page and API on Cloudflare Workers. Anyone can open it, play the recorded run or type a story
+(the rules alone). The live version, with your voice, Meta's models and the spoken questions, needs an access code, which
+the page asks for and keeps in the browser. Every billed call goes through one Durable Object that keeps three limits
+across restarts: a daily Meta budget (`DAILY_CAP_USD`, $5), a daily voice budget (`DAILY_VOICE_CHARS`, 6,000) and calls
+per visitor per hour (`HOURLY_CALLS_PER_IP`, 60). When one is reached the page says so and carries on with the rules.
+
+```bash
+wrangler secret put META_MODEL_API_KEY      # and ELEVENLABS_API_KEY, ACCESS_CODE
+wrangler deploy
+```
 
 ## How the check works
 

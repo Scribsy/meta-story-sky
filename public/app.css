@@ -71,6 +71,10 @@ textarea, input {
   padding: 14px; font: 18px/1.5 var(--serif);
 }
 .type-form .primary { justify-self: end; }
+.code-form { max-width: 420px; margin: 40px auto 0; text-align: center; color: var(--faint); font-size: 14px; }
+.code-form .row { margin-top: 10px; flex-wrap: nowrap; }
+.code-form input { padding: 10px 14px; font: 16px var(--sans, inherit); }
+.code-form .by { min-height: 1.2em; margin-top: 6px; }
 
 .transcript {
   font: clamp(18px, 2.2vw, 24px)/1.6 var(--serif); padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px;

@@ -3,3 +3,5 @@ runs/
 .env
 .env.*
 *.log
+.dev.vars*
+.wrangler/

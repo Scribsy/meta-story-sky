@@ -1,0 +1,13 @@
+// The hosted Story Sky (worker.mjs). Secrets, set from Doppler, never in this file:
+//   META_MODEL_API_KEY, ELEVENLABS_API_KEY, ACCESS_CODE
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "story-sky",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-06-01",
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "durable_objects": { "bindings": [{ "name": "METER", "class_name": "Meter" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meter"] }],
+  "vars": { "DAILY_CAP_USD": "5", "DAILY_VOICE_CHARS": "6000", "HOURLY_CALLS_PER_IP": "60" },
+  "observability": { "enabled": true }
+}

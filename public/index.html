@@ -30,6 +30,14 @@
       <div class="alts">
         <button id="replay" class="link" type="button">Play a recorded run</button>
       </div>
+      <form id="code-form" class="code-form" hidden>
+        <label for="code">Have an access code? It turns on the live version: your voice, Meta's models, the spoken questions.</label>
+        <div class="row">
+          <input id="code" type="password" autocomplete="off" placeholder="Access code" />
+          <button class="ghost" type="submit">Unlock</button>
+        </div>
+        <p id="code-note" class="by" role="status"></p>
+      </form>
     </section>
 
     <!-- 1 Talk: the first, easy question -->
