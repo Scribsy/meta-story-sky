@@ -3,6 +3,7 @@ import { toWav16k } from './lib/wav.mjs';
 import { spot } from './lib/spot.mjs';
 import { rulesQuestion } from './lib/verify.mjs';
 import { placeLabels } from './lib/layout.mjs';
+import { buildStoryStart } from './lib/story-start.mjs';
 
 const $ = (s) => document.querySelector(s);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -41,6 +42,7 @@ async function checkStatus() {
   try { s = await (await api('/api/status')).json(); } catch { /* no server: the page runs on its own */ }
   state.live = Boolean(s.live);
   state.voice = Boolean(s.voice);
+  state.claim = Boolean(s.claim);
   const locked = s.gated && !s.unlocked;
   $('#code-form').hidden = !locked;
   setMode(state.live ? 'Live · Meta Model API' : locked ? 'Recorded run or rules only' : 'No API key here · rules only', state.live ? 'live' : 'replay');
@@ -384,6 +386,7 @@ async function paintSky(kept) {
     $('#sky-cap').textContent = `The painted sky didn’t come back (${e.message}). Your stars are still here.`;
   }
   if (new URLSearchParams(location.search).has('record') && !state.replay) offerRunDownload();
+  $('#handoff').hidden = !state.claim || Boolean(state.replay);
 }
 
 function hash(s) { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; }
@@ -439,6 +442,24 @@ function offerRunDownload() {
 }
 
 $('#again').addEventListener('click', () => location.assign(location.pathname));
+
+// ---------- keep this story in Scribsy: only on the writer's press ----------
+$('#claim').addEventListener('click', async () => {
+  const button = $('#claim');
+  button.disabled = true;
+  $('#claim-note').textContent = 'Keeping your story…';
+  try {
+    const kept = state.kept.size ? state.kept : new Set(state.cards.map(keyOf));
+    const story = buildStoryStart({ rounds: state.run.rounds, cards: state.cards, kept, sky: state.run.sky, keyOf });
+    const res = await api('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(story) });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.error);
+    location.assign(out.url);
+  } catch (e) {
+    button.disabled = false;
+    $('#claim-note').textContent = `That didn’t work (${e.message}). Your story is still here; try again.`;
+  }
+});
 
 // ---------- replay: a recorded live run, played round by round ----------
 async function startReplay() {

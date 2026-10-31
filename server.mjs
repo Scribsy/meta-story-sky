@@ -26,9 +26,16 @@ const meter = {
   charge: async (usd, what) => { spent += usd; await log(`${what} $${usd.toFixed(5)} total $${spent.toFixed(4)}`); },
   speak: async (chars) => (spokenChars + chars > XI_CHAR_CAP ? `Voice cap of ${XI_CHAR_CAP} characters reached for this server run.` : null),
   spoken: async (chars) => { spokenChars += chars; await log(`speak ${chars} chars total ${spokenChars}`); },
+  claim: async () => null,
   totals: async () => ({ spent: Number(spent.toFixed(4)), cap: SPEND_CAP_USD, spokenChars }),
 };
-const api = createApi(process.env, meter);
+// Claimed story starts, in memory: they last until collected, their day is up, or this server stops.
+const claims = new Map();
+const store = {
+  put: async (id, text, ttl) => { claims.set(id, { text, until: Date.now() + ttl * 1000 }); },
+  take: async (id) => { const c = claims.get(id); claims.delete(id); return c && c.until > Date.now() ? c.text : null; },
+};
+const api = createApi(process.env, meter, store);
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript', '.js': 'text/javascript', '.css': 'text/css',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.wav': 'audio/wav', '.mp3': 'audio/mpeg' };

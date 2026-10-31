@@ -1,5 +1,6 @@
 // The hosted Story Sky (worker.mjs). Secrets, set from Doppler, never in this file:
-//   META_MODEL_API_KEY, ELEVENLABS_API_KEY, ACCESS_CODE
+//   META_MODEL_API_KEY, ELEVENLABS_API_KEY, ACCESS_CODE, CLAIM_READ_TOKEN
+// The hand-off to Scribsy (docs/STORY-START.md) stays off until SCRIBSY_IMPORT_URL is added to vars.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "story-sky",
@@ -8,6 +9,7 @@
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
   "durable_objects": { "bindings": [{ "name": "METER", "class_name": "Meter" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meter"] }],
+  "kv_namespaces": [{ "binding": "CLAIMS", "id": "39409ad1d68e40879ca7c00df0468300" }],
   "vars": { "DAILY_CAP_USD": "5", "DAILY_VOICE_CHARS": "6000", "HOURLY_CALLS_PER_IP": "60" },
   "observability": { "enabled": true }
 }

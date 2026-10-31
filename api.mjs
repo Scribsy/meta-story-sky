@@ -4,6 +4,7 @@
 import { buildQuestion, questionText, rulesQuestion, verifyCards } from './public/lib/verify.mjs';
 import { missedNames, spot } from './public/lib/spot.mjs';
 import { REVEAL_SCHEMA, REVEAL_SYSTEM, SOFTEN_SCHEMA, SOFTEN_SYSTEM, skyPrompt } from './prompts.mjs';
+import { checkStoryStart } from './public/lib/story-start.mjs';
 
 const API = 'https://api.meta.ai/v1';
 export const MODELS = { text: 'muse-spark-1.3', voice: 'muse-voice-transcribe-1.0', image: 'muse-image-1.0' };
@@ -13,6 +14,13 @@ const PRICE = { inTok: 1.25 / 1e6, outTok: 4.25 / 1e6, audioHour: 0.18, image: 0
 // Eleven v4 Turbo is the expressive real-time model; the style is an audio tag (not spoken) that sets a muse's delivery.
 const XI = { voice: 'cTLtc9FcFdsMXKOrrC79', model: 'eleven_v4_turbo', style: '[softly, curious]' };
 const BILLED = new Set(['/api/transcribe', '/api/reveal', '/api/sky', '/api/speak']);
+// A claimed story start waits a day for Scribsy to collect it, then is gone.
+const CLAIM_TTL = 24 * 60 * 60;
+/** 130 random bits as 26 base-32 characters: the claim link's only secret. */
+function claimId() {
+  const a = 'abcdefghijklmnopqrstuvwxyz234567';
+  return [...crypto.getRandomValues(new Uint8Array(26))].map((b) => a[b & 31]).join('');
+}
 
 export const httpError = (status, message) => Object.assign(new Error(message), { status });
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
@@ -29,11 +37,13 @@ function codeMatches(given, code) {
 /**
  * env: META_MODEL_API_KEY, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID, ELEVENLABS_MODEL, ELEVENLABS_STYLE,
  *      REASONING_EFFORT, ACCESS_CODE (when set, every billed call must carry it in the x-access-code header).
+ *      SCRIBSY_IMPORT_URL and CLAIM_READ_TOKEN (the hand-off to Scribsy; off unless set).
  * meter: { allow(ip) → reason it is refused, or null; charge(usd, what); speak(chars) → reason, or null; spoken(chars);
- *          totals() → { spent, cap, spokenChars } }.
+ *          claim(ip) → reason, or null; totals() → { spent, cap, spokenChars } }.
+ * store (optional): { put(id, text, ttlSeconds); take(id) → text or null, deleting it }. Holds claimed story starts.
  * Returns handle(request, ip) → Response, or null when the path is not an API path.
  */
-export function createApi(env, meter) {
+export function createApi(env, meter, store = null) {
   const KEY = env.META_MODEL_API_KEY ?? env.MODEL_API_KEY ?? '';
   const XI_KEY = env.ELEVENLABS_API_KEY ?? '';
   const voice = { id: env.ELEVENLABS_VOICE_ID ?? XI.voice, model: env.ELEVENLABS_MODEL ?? XI.model, style: env.ELEVENLABS_STYLE ?? XI.style };
@@ -42,6 +52,10 @@ export function createApi(env, meter) {
   const REASONING = env.REASONING_EFFORT ?? 'minimal';
   const CODE = env.ACCESS_CODE ?? '';
   const spokenCache = new Map();
+  // The hand-off to Scribsy (docs/STORY-START.md) is off unless an import URL and a store are both set.
+  const IMPORT_URL = env.SCRIBSY_IMPORT_URL ?? '';
+  const READ_TOKEN = env.CLAIM_READ_TOKEN ?? '';
+  const claims = Boolean(IMPORT_URL && store);
 
   async function meta(path, init) {
     const res = await fetch(`${API}${path}`, { ...init, headers: { Authorization: `Bearer ${KEY}`, ...init.headers } });
@@ -181,7 +195,28 @@ export function createApi(env, meter) {
       const unlocked = !CODE || codeMatches(request.headers.get('x-access-code'), CODE);
       if (pathname === '/api/status') {
         // Without the code the page still works: replay, or the rules alone in the browser.
-        return json({ live: Boolean(KEY) && unlocked, voice: Boolean(XI_KEY) && unlocked, gated: Boolean(CODE), unlocked, models: MODELS, ...(unlocked ? await meter.totals() : {}) });
+        return json({ live: Boolean(KEY) && unlocked, voice: Boolean(XI_KEY) && unlocked, gated: Boolean(CODE), unlocked, claim: claims, models: MODELS, ...(unlocked ? await meter.totals() : {}) });
+      }
+      if (pathname === '/api/claim' && request.method === 'POST') {
+        // Keep this story in Scribsy: only when the writer presses the button, with or without the access code.
+        if (!claims) return json({ error: 'Not found' }, 404);
+        const refused = await meter.claim(ip);
+        if (refused) return json({ error: refused }, 429);
+        const input = await bodyJson(request, 6 * 1024 * 1024);
+        let story;
+        try { story = checkStoryStart(input); } catch (e) { return json({ error: e.message }, 400); }
+        const id = claimId();
+        await store.put(id, JSON.stringify(story), CLAIM_TTL);
+        const url = new URL(IMPORT_URL);
+        url.searchParams.set('claim', id);
+        return json({ id, url: url.href, expiresAt: new Date(Date.now() + CLAIM_TTL * 1000).toISOString(), cards: story.cards.length });
+      }
+      if (pathname.startsWith('/api/claim/') && request.method === 'GET') {
+        // Scribsy's server collects the story with its own token, once; then it is gone.
+        if (!claims || !READ_TOKEN || !codeMatches(request.headers.get('x-claim-token'), READ_TOKEN)) return json({ error: 'Not found' }, 404);
+        const id = pathname.slice('/api/claim/'.length);
+        const story = /^[a-z0-9]{26}$/.test(id) ? await store.take(id) : null;
+        return story ? new Response(story, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }) : json({ error: 'Not found or expired' }, 404);
       }
       if (request.method !== 'POST' || !BILLED.has(pathname)) return json({ error: 'Not found' }, 404);
       if (!unlocked) return json({ error: 'This needs the access code.' }, 401);

@@ -34,6 +34,10 @@ export class Meter extends DurableObject {
     return (await this.#get(`chars:${day()}`)) + chars > this.charCap ? 'Today\'s voice budget is used up: questions are shown, not spoken.' : null;
   }
   async spoken(chars) { await this.#add(`chars:${day()}`, chars); }
+  /** Story starts kept for Scribsy: a few an hour per visitor is plenty for a person and useless for flooding. */
+  async claim(ip) {
+    return (await this.#add(`claim:${hour()}:${ip}`, 1)) > 10 ? 'Too many stories kept from here this hour.' : null;
+  }
   async totals() {
     return { spent: Number((await this.#get(`usd:${day()}`)).toFixed(4)), cap: this.cap, spokenChars: await this.#get(`chars:${day()}`) };
   }
@@ -54,9 +58,15 @@ export default {
       charge: (usd, what) => stub.charge(usd, what),
       speak: (chars) => stub.speak(chars),
       spoken: (chars) => stub.spoken(chars),
+      claim: (ip) => stub.claim(ip),
       totals: () => stub.totals(),
     };
-    const out = await createApi(env, meter)(request, request.headers.get('cf-connecting-ip') ?? '');
+    // Claimed story starts live in KV, which deletes each one after its day on its own.
+    const store = env.CLAIMS ? {
+      put: (id, text, ttl) => env.CLAIMS.put(id, text, { expirationTtl: ttl }),
+      take: async (id) => { const text = await env.CLAIMS.get(id); if (text) await env.CLAIMS.delete(id); return text; },
+    } : null;
+    const out = await createApi(env, meter, store)(request, request.headers.get('cf-connecting-ip') ?? '');
     return out ?? env.ASSETS.fetch(request);
   },
 };

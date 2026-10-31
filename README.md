@@ -41,6 +41,7 @@ demo.
 | The hosted version on Cloudflare Workers: the same API behind an access code, with daily caps kept in a Durable Object | [`worker.mjs`](worker.mjs), [`wrangler.jsonc`](wrangler.jsonc) |
 | In-browser recording and 16 kHz WAV encoding for Muse Voice Transcribe | [`public/lib/wav.mjs`](public/lib/wav.mjs) |
 | The page: the opening question, the rounds, keep, sky | [`public/`](public/) |
+| The hand-off: a "story start" package of the run, checked again on the server, kept 24 hours for Scribsy to collect once (off until configured) | [`public/lib/story-start.mjs`](public/lib/story-start.mjs), [`docs/STORY-START.md`](docs/STORY-START.md) |
 | Tests | [`tests/`](tests/) |
 | Replay recorder and the one pre-rendered line of audio | [`scripts/`](scripts/) |
 

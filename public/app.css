@@ -155,6 +155,9 @@ mark.on { background: rgba(255, 217, 138, 0.32); border-bottom-style: solid; }
 .star .core.open { fill: none; stroke: var(--question); stroke-width: 3; stroke-dasharray: 4 5; }
 .star text { fill: #fff; font: 600 34px var(--serif); paint-order: stroke; stroke: rgba(4, 6, 20, 0.85); stroke-width: 8px; }
 
+.handoff { max-width: 520px; margin: 22px auto 0; text-align: center; }
+.handoff .by { margin-top: 10px; line-height: 1.5; }
+
 .foot { text-align: center; color: var(--faint); font-size: 12.5px; padding: 24px 16px 32px; }
 .foot b { color: var(--dim); font-weight: 500; }
 
