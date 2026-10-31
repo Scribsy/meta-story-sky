@@ -124,6 +124,8 @@ export function buildQuestion(transcript, pick, asked = []) {
   // what_kind repeats the span, which only reads well for a short noun phrase.
   if (pick.template === 'what_kind' && words(span).length > 3) return null;
   if (asked.some((a) => sameSpan(a.span, span))) return null;
+  // Each question in a run uses a different template: a second "like what?" reads as a loop, not a conversation.
+  if (asked.some((a) => a.template === pick.template)) return null;
   const at = hits[hits.length - 1];
   return { template: pick.template, span, start: at.start, end: at.end, text: questionText(pick.template, span) };
 }
@@ -143,6 +145,7 @@ export function rulesQuestion(transcript, cards, asked = [], from = 0) {
     if (c.kind === 'place') picks.push({ template: 'where_is', span: c.label });
     if (c.kind === 'thing') picks.push({ template: 'what_kind', span: c.label.replace(/^(the|a|an)\s+/i, '') });
     picks.push({ template: 'anything_else', span: c.label });
+    picks.push({ template: 'come_from', span: c.label });
   }
   for (const p of picks) {
     const q = buildQuestion(transcript, p, asked);

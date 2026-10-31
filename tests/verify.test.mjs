@@ -105,6 +105,13 @@ test('no span is asked about twice', () => {
   assert.ok(buildQuestion(T, { template: 'where_is', span: 'Hollow Isle' }, asked));
 });
 
+test('no template is used twice in a run, and the rules pick another', () => {
+  const asked = [{ template: 'like_what', span: 'the night ferry' }];
+  assert.equal(buildQuestion(T, { template: 'like_what', span: 'the brass key' }, asked), null);
+  const q = rulesQuestion(T, spot(T), [{ template: 'anything_else', span: 'who rang the bell' }], T.indexOf(S3));
+  assert.notEqual(q.template, 'anything_else');
+});
+
 test('rulesQuestion prefers the latest answer and skips what was asked', () => {
   const from = T.indexOf(S3);
   const q = rulesQuestion(T, spot(T), [{ template: 'anything_else', span: 'who rang the bell' }], from);

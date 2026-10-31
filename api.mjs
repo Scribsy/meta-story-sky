@@ -3,7 +3,7 @@
 // Response only. Where the money is counted is the caller's choice: a `meter` (see server.mjs and worker.mjs).
 import { buildQuestion, questionText, rulesQuestion, verifyCards } from './public/lib/verify.mjs';
 import { missedNames, spot } from './public/lib/spot.mjs';
-import { REVEAL_SCHEMA, REVEAL_SYSTEM, skyPrompt } from './prompts.mjs';
+import { REVEAL_SCHEMA, REVEAL_SYSTEM, SOFTEN_SCHEMA, SOFTEN_SYSTEM, skyPrompt } from './prompts.mjs';
 
 const API = 'https://api.meta.ai/v1';
 export const MODELS = { text: 'muse-spark-1.3', voice: 'muse-voice-transcribe-1.0', image: 'muse-image-1.0' };
@@ -118,16 +118,52 @@ export function createApi(env, meter) {
 
   /** Muse Image paints the night sky behind the kept cards; the page draws the stars and their names on top. */
   async function sky(cards) {
-    const out = await meta('/images/generations', {
+    const paint = (prompt) => meta('/images/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODELS.image, prompt: skyPrompt(cards), n: 1, size: '1792x1024', response_format: 'b64_json' }),
+      body: JSON.stringify({ model: MODELS.image, prompt, n: 1, size: '1792x1024', response_format: 'b64_json' }),
     });
+    // The image filter can turn down a writer's darker words (Muse Image has no moderation setting yet). Then the
+    // motifs are softened into painterly hints, and failing that left out; the stars keep the writer's words either way.
+    // Refused images are not billed.
+    const filtered = (e) => { if (!/content_policy/.test(e.message)) throw e; };
+    let out = null;
+    let painted = 'words';
+    try {
+      out = await paint(skyPrompt(cards));
+    } catch (e) {
+      filtered(e);
+      const hints = await soften(cards).catch(() => null);
+      if (hints) {
+        try { out = await paint(skyPrompt(cards, { hints })); painted = 'hints'; } catch (e2) { filtered(e2); }
+      }
+      if (!out) { out = await paint(skyPrompt(cards, { gentle: true })); painted = 'none'; }
+    }
     await meter.charge(PRICE.image, 'sky');
     const img = out.data?.[0];
     // Muse Image may send WebP ("UklGR" is RIFF in base64) or PNG; label the data URL with what it really is.
     const type = img?.b64_json?.startsWith('UklGR') ? 'webp' : 'png';
-    return { image: img?.b64_json ? `data:image/${type};base64,${img.b64_json}` : img?.url ?? null, model: MODELS.image };
+    return { image: img?.b64_json ? `data:image/${type};base64,${img.b64_json}` : img?.url ?? null, model: MODELS.image, painted };
+  }
+
+  /** Muse Spark restates the kept motifs as calm hints for the painter. Throws a content_policy error if it can't. */
+  async function soften(cards) {
+    const motifs = cards.filter((c) => c.kind !== 'question').map((c) => c.label);
+    const out = await meta('/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODELS.text,
+        reasoning_effort: REASONING,
+        messages: [{ role: 'system', content: SOFTEN_SYSTEM }, { role: 'user', content: motifs.map((m) => `- ${m}`).join('\n') }],
+        response_format: { type: 'json_schema', json_schema: { name: 'soften', schema: SOFTEN_SCHEMA, strict: true } },
+      }),
+    });
+    const u = out.usage ?? {};
+    await meter.charge((u.prompt_tokens ?? 0) * PRICE.inTok + (u.completion_tokens ?? 0) * PRICE.outTok, 'soften');
+    const hints = JSON.parse(out.choices?.[0]?.message?.content ?? '{}').hints;
+    if (!Array.isArray(hints) || !hints.length) throw httpError(502, 'No softened hints came back.');
+    return hints.slice(0, motifs.length).map((h) => String(h).slice(0, 60));
   }
 
   async function body(request, limit) {
@@ -174,6 +210,6 @@ export function createApi(env, meter) {
 function revealInput(transcript, from, asked) {
   const parts = [`TRANSCRIPT:\n${transcript}`];
   if (from > 0) parts.push(`LATEST ANSWER (ask about this if you can):\n${transcript.slice(from)}`);
-  if (asked.length) parts.push(`ALREADY ASKED (never ask about these spans again):\n${asked.map((a) => `- ${a.span}`).join('\n')}`);
+  if (asked.length) parts.push(`ALREADY ASKED (never reuse these spans or templates):\n${asked.map((a) => `- ${a.template}: ${a.span}`).join('\n')}`);
   return parts.join('\n\n');
 }

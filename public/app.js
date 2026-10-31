@@ -238,7 +238,7 @@ async function playReveal(r) {
 
 function nextQuestion() {
   const p = state.pending;
-  const q = p && !state.asked.some((a) => a.span.toLowerCase() === p.span.toLowerCase()) ? p : null;
+  const q = p && !state.asked.some((a) => a.span.toLowerCase() === p.span.toLowerCase() || a.template === p.template) ? p : null;
   state.pending = null;
   const replayDone = state.replay && state.rounds.length >= state.replay.rounds.length;
   if (!q || state.asked.length >= MAX_QUESTIONS || replayDone) {
@@ -375,7 +375,9 @@ async function paintSky(kept) {
       img.src = out.image;
       img.alt = `A painted night sky for a story with ${kept.map((c) => c.label).join(', ')}`;
       img.onload = () => img.classList.add('in');
-      $('#sky-cap').textContent = `Sky painted by ${out.model}. Stars are your kept cards.`;
+      const how = { hints: ', from gentler hints of your words: its image filter turned the words themselves down',
+        none: ', without your story’s words: its image filter turned them down' }[out.painted] ?? '';
+      $('#sky-cap').textContent = `Sky painted by ${out.model}${how}. Stars are your kept cards.`;
     } else $('#sky-cap').textContent = 'Stars are your kept cards. (The painted sky needs the live server.)';
   } catch (e) {
     $('#sky-cap').textContent = `The painted sky didn’t come back (${e.message}). Your stars are still here.`;

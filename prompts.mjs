@@ -22,7 +22,8 @@ Then choose ONE follow-up question. You do not write it. Pick a template id and 
 - when_then: "And when {X}, what happens?"  (X is a short event in the writer's words)
 The span must be copied exactly from the transcript, at most 8 words, and read naturally inside the template. Prefer
 the thing the writer seems most alive about or least sure of. This is a conversation in rounds: when a LATEST ANSWER is
-given, ask about something in it if you can, and never pick a span listed under ALREADY ASKED.`;
+given, ask about something in it if you can, never pick a span listed under ALREADY ASKED, and never use a template
+listed there again: each question in the conversation uses a different template.`;
 
 const STR = { type: 'string' };
 export const REVEAL_SCHEMA = {
@@ -53,15 +54,33 @@ export const REVEAL_SCHEMA = {
 
 const KIND_WORD = { person: 'a person', place: 'a place', thing: 'an object', name: 'a name', question: 'an unanswered question' };
 
-/** The sky behind the stars. Only the kept labels go in, and the image must not try to write them (the page does). */
-export function skyPrompt(cards) {
-  const motifs = cards.filter((c) => c.kind !== 'question').map((c) => `${c.label} (${KIND_WORD[c.kind] ?? 'a thing'})`);
+/** When the image filter turns down the writer's words, Muse Spark restates each one as a calm painterly hint. */
+export const SOFTEN_SYSTEM = `You help paint a quiet, star-atlas night sky for a novelist's story. Some of the story's
+motifs are dark (monsters, fire, violence) and an image filter declined them. For each motif, give a calm, non-graphic
+visual hint of at most 6 words that a painter could put in clouds or on the horizon: shapes, silhouettes, light and
+colour, no violence, no gore, no weapons, no teeth or blood. Keep the motif recognisable. One hint per motif, same order.`;
+export const SOFTEN_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['hints'],
+  properties: { hints: { type: 'array', items: { type: 'string' } } },
+};
+
+/**
+ * The sky behind the stars. Only the kept labels go in, and the image must not try to write them (the page does).
+ * `hints` replaces the labels with softened ones; `gentle` leaves them out altogether. Either way the stars on the sky
+ * still carry the writer's own words.
+ */
+export function skyPrompt(cards, { gentle = false, hints = null } = {}) {
+  const things = cards.filter((c) => c.kind !== 'question');
+  const motifs = gentle ? [] : hints ?? things.map((c) => `${c.label} (${KIND_WORD[c.kind] ?? 'a thing'})`);
   const questions = cards.filter((c) => c.kind === 'question').length;
   return [
-    'A wide, quiet night sky over a dark horizon, painted like a hand-inked star atlas: deep indigo, fine silver stars,',
-    `soft nebula glow, ${Math.max(3, motifs.length)} brighter stars forming one loose constellation across the centre.`,
-    motifs.length ? `Faint shapes in the clouds and on the horizon hint at the story's motifs: ${motifs.join('; ')}.` : '',
+    // The framing matters to the image filter as much as to the look: this is a gentle picture of someone's invented story.
+    'A charming storybook illustration for a novelist\'s fictional story idea, in the style of a whimsical picture-book',
+    'star atlas: a wide, quiet night sky over a dark horizon, deep indigo, fine silver stars, soft nebula glow,',
+    `${Math.max(3, gentle ? cards.length : motifs.length)} brighter stars forming one loose constellation across the centre.`,
+    motifs.length ? `Soft, friendly silhouettes in the clouds and on the horizon hint at the story's imagined motifs: ${motifs.join('; ')}.` : '',
     questions ? 'One small patch of the sky is still dark and unmapped, waiting.' : '',
-    'No text, no letters, no labels, no people\'s faces, no logos. Calm, wondrous, painterly.',
+    'Wondrous and cosy rather than frightening: nothing graphic, no gore. No text, no letters, no labels, no people\'s',
+    'faces, no logos. Painterly, hand-inked, gentle.',
   ].filter(Boolean).join(' ');
 }
