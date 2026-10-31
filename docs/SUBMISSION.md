@@ -33,7 +33,7 @@ those cards as its constellation. The model proposes; the writer's words decide.
 - Muse Spark (`muse-spark-1.3`, chat completions with a strict JSON schema): proposes cards (kind, label, exact quote,
   clue) after each answer, and picks the next question's template and span, preferring the latest answer.
 - Muse Image (`muse-image-1.0`): paints the sky behind the kept cards.
-A full three-round run costs about five cents. The questions are spoken by ElevenLabs (Meta's API has no
+A full three-round run costs about four cents. The questions are spoken by ElevenLabs (Meta's API has no
 text-to-speech); the server only ever speaks a filled-in template question, and the voice is optional.
 
 **What was built during the hackathon**
@@ -53,8 +53,16 @@ https://github.com/Scribsy/meta-story-sky
 (Unlisted YouTube or Loom link, 3:00 or less)
 
 **Live demo**
-https://scribsy.github.io/meta-story-sky/ (no server behind it: "Play a recorded run" plays a real live run; typing runs the
-rules-only version in the browser). To run it live: `META_MODEL_API_KEY=... ELEVENLABS_API_KEY=... node server.mjs`.
+https://story-sky.stevenrpattison.workers.dev. Anyone can play the recorded run there or type a story (rules only).
+For the live version (mic, Meta's models, the spoken questions), enter the access code on the title screen.
+
+**Testing instructions / notes for judges** (the code is in Doppler, `scribsy-labs/research` → `STORY_SKY_ACCESS_CODE`;
+paste it here, never into the repo)
+Open the live demo in Chrome, enter the access code `<paste code>`, click Begin and allow the microphone. Answer each
+question out loud in a sentence or two (tap the mic to start and again to stop), keep the cards you like, then Show my
+sky. Headphones help, so the spoken question doesn't feed back into the mic. If the day's live budget runs out, the page
+says so and carries on with the rules alone; "Play a recorded run" always works.
+Backup with no server: https://scribsy.github.io/meta-story-sky/ (recorded run and rules only).
 
 **Team**
 Steven (Scribsy founder). Add your full name as on your CV profile, and anyone else who worked on it.

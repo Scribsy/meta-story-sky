@@ -80,8 +80,9 @@ META_MODEL_API_KEY=... ELEVENLABS_API_KEY=... node server.mjs     # the voice ke
 
 Without a Meta key, `node server.mjs` still serves the page. Choose **Play a recorded run** to watch a real live run
 recorded earlier, or **Type it instead** to see the rules-only version that runs entirely in your browser. The page
-always says which mode it is in. The [hosted page](https://scribsy.github.io/meta-story-sky/) is the same page with no
-server, so it runs the same two ways.
+always says which mode it is in. The [live demo](https://story-sky.stevenrpattison.workers.dev) runs everything, with
+the live models behind an access code; the [GitHub Pages copy](https://scribsy.github.io/meta-story-sky/) has no server,
+so it runs the same two ways as above.
 
 ```bash
 npm test     # the verifier, the rules and the question builder
