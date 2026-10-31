@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Story Sky · Scribsy</title>
+  <meta name="description" content="Speak a story idea. Meta's Muse models find what's already in it, check every word against what you said, ask one question, and paint your story's sky.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <header class="top">
+    <span class="brand">Scribsy<span class="dot">.</span></span>
+    <span id="mode" class="mode" role="status"></span>
+  </header>
+
+  <main>
+    <!-- 1 Talk -->
+    <section id="talk" class="frame active" aria-labelledby="talk-h">
+      <h1 id="talk-h">Tell me about the story you keep coming back to.</h1>
+      <p class="sub">Say it out loud, rough and unfinished. About a minute is plenty.</p>
+      <button id="mic" class="mic" type="button" aria-pressed="false">
+        <span class="mic-ring"></span><span id="mic-label">Tap to talk</span>
+      </button>
+      <p id="mic-time" class="hint" aria-live="polite"></p>
+      <div class="alts">
+        <button id="type-open" class="link" type="button">Type it instead</button>
+        <span aria-hidden="true">·</span>
+        <button id="replay" class="link" type="button">Play a recorded run</button>
+      </div>
+      <form id="type-form" class="type-form" hidden>
+        <label for="type-text" class="sr">Your story idea</label>
+        <textarea id="type-text" rows="5" placeholder="Wren runs the night ferry to Hollow Isle…"></textarea>
+        <button class="primary" type="submit">Use these words →</button>
+      </form>
+    </section>
+
+    <!-- 2 Your words -->
+    <section id="words" class="frame" aria-labelledby="words-h">
+      <p class="eyebrow" id="words-h">What you said <span id="words-by" class="by"></span></p>
+      <div id="transcript" class="transcript" tabindex="0"></div>
+      <button id="reveal" class="primary" type="button">Show me what's there →</button>
+    </section>
+
+    <!-- 3 Reveal, question and keep: one surface -->
+    <section id="board" class="frame" aria-labelledby="board-h">
+      <p class="eyebrow" id="board-h">Found in what you said <span id="board-by" class="by"></span></p>
+      <h2 id="board-title">Look what's already there.</h2>
+      <p id="check" class="check"></p>
+      <div id="cards" class="cards" role="list"></div>
+      <details id="dropped" class="dropped" hidden>
+        <summary></summary>
+        <ul></ul>
+      </details>
+
+      <div id="ask" class="ask" hidden>
+        <p class="eyebrow">One question</p>
+        <p id="ask-q" class="ask-q"></p>
+        <form id="ask-form">
+          <label for="ask-a" class="sr">Your answer</label>
+          <input id="ask-a" autocomplete="off" placeholder="Answer if you like. A few words is fine.">
+          <div class="row">
+            <button class="primary" type="submit">Add ↵</button>
+            <button id="ask-skip" class="ghost" type="button">Skip</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="keep" class="keep" hidden>
+        <p class="keep-h">Tap the cards that belong to your story.</p>
+        <button id="keep-go" class="primary" type="button">Keep all →</button>
+      </div>
+    </section>
+
+    <!-- 4 Sky -->
+    <section id="sky" class="frame" aria-labelledby="sky-h">
+      <p class="eyebrow" id="sky-h">Your story's sky</p>
+      <figure class="sky">
+        <img id="sky-img" alt="">
+        <svg id="sky-svg" viewBox="0 0 1792 1024" role="img" aria-label="A constellation of your kept cards"></svg>
+        <figcaption id="sky-cap" class="by"></figcaption>
+      </figure>
+      <div class="row center">
+        <button id="again" class="ghost" type="button">Start another story</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Built for the Meta Global AI Developer Hackathon on <b>Muse Voice Transcribe</b>, <b>Muse Spark</b> and <b>Muse Image</b>.
+    A standalone demo; nothing here changes the Scribsy app.
+  </footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

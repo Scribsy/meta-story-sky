@@ -1,0 +1,14 @@
+{
+  "name": "meta-story-sky",
+  "version": "1.0.0",
+  "description": "Speak a story idea; Meta's Muse models turn it into verified cards, one question, and your story's sky.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "doppler run -- node server.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  }
+}
