@@ -19,10 +19,12 @@ const MODELS = { text: 'muse-spark-1.3', voice: 'muse-voice-transcribe-1.0', ima
 // Prices from dev.meta.ai/docs/pricing-rate-limits (31 Oct 2026). The cap stops this server well inside the $150 credits.
 const PRICE = { inTok: 1.25 / 1e6, outTok: 4.25 / 1e6, audioHour: 0.18, image: 0.01 };
 const SPEND_CAP_USD = Number(process.env.SPEND_CAP_USD ?? 15);
-// The voice: ElevenLabs reads the question aloud, nothing else. River is a calm, neutral stock voice.
+// The voice: ElevenLabs reads the question aloud, nothing else. Lily is a soft, velvety stock voice: the muse.
 const XI_KEY = process.env.ELEVENLABS_API_KEY ?? '';
-const XI_VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'SAz9YHcvj6GT2YYXdXww';
-const XI_MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_flash_v2_5';
+const XI_VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'pFZP5JQG7iQjIQuC4Bku';
+// Eleven v4 Turbo: the expressive real-time model. The style is an audio tag (not spoken) that sets a muse's delivery.
+const XI_MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_v4_turbo';
+const XI_STYLE = process.env.ELEVENLABS_STYLE ?? '[softly, curious]';
 const XI_CHAR_CAP = Number(process.env.ELEVENLABS_CHAR_CAP ?? 6000);
 let spokenChars = 0;
 const spoken = new Map();
@@ -106,7 +108,7 @@ async function speak(template, span) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${XI_VOICE}?output_format=mp3_44100_128`, {
     method: 'POST',
     headers: { 'xi-api-key': XI_KEY, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-    body: JSON.stringify({ text, model_id: XI_MODEL, voice_settings: { stability: 0.6, similarity_boost: 0.75 } }),
+    body: JSON.stringify({ text: `${XI_STYLE} ${text}`, model_id: XI_MODEL, voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
   });
   if (!res.ok) throw httpError(502, `ElevenLabs answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
   spokenChars += text.length;

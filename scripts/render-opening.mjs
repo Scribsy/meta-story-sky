@@ -2,16 +2,17 @@
 //   ELEVENLABS_API_KEY=... node scripts/render-opening.mjs
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const TEXT = 'What’s the first thing you see?';
-const VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'SAz9YHcvj6GT2YYXdXww';
-const MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_flash_v2_5';
+// The bracketed audio tag directs the delivery (Eleven v4 does not speak it); the ellipsis gives the line a breath.
+const TEXT = '[softly, hushed and reverent] What’s the first thing… you see?';
+const VOICE = process.env.ELEVENLABS_VOICE_ID ?? 'pFZP5JQG7iQjIQuC4Bku';
+const MODEL = process.env.ELEVENLABS_MODEL ?? 'eleven_v4';
 const key = process.env.ELEVENLABS_API_KEY;
 if (!key) throw new Error('Set ELEVENLABS_API_KEY.');
 
 const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=mp3_44100_128`, {
   method: 'POST',
   headers: { 'xi-api-key': key, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-  body: JSON.stringify({ text: TEXT, model_id: MODEL, voice_settings: { stability: 0.6, similarity_boost: 0.75 } }),
+  body: JSON.stringify({ text: TEXT, model_id: MODEL, voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
 });
 if (!res.ok) throw new Error(`ElevenLabs answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
 await mkdir(new URL('../public/audio/', import.meta.url), { recursive: true });

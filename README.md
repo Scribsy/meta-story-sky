@@ -60,7 +60,7 @@ All three are called through the [Meta Model API](https://dev.meta.ai/products/m
 costs about five cents.
 
 The only other service is the voice: Meta's API has no text-to-speech, so **ElevenLabs** reads each question aloud
-(`eleven_flash_v2_5`, a stock voice). The server will only speak a filled-in template question, never free text, and
+(Eleven v4 Turbo with a soft audio-tag direction, a stock voice; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and
 it is optional: without an ElevenLabs key the questions are shown, not spoken. The question text, which contains a few
 of the writer's words, is the only thing sent to ElevenLabs.
 
