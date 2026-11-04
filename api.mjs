@@ -1,7 +1,7 @@
 // Story Sky's API, shared by the local Node server (server.mjs) and the hosted Worker (worker.mjs). It talks to Meta's
 // Model API and, for the spoken question only, ElevenLabs, so no key ever reaches the browser. Web-standard Request and
 // Response only. Where the money is counted is the caller's choice: a `meter` (see server.mjs and worker.mjs).
-import { buildQuestion, questionText, rulesQuestion, verifyCards } from './public/lib/verify.mjs';
+import { buildQuestion, namesIn, questionText, rulesQuestion, verifyCards } from './public/lib/verify.mjs';
 import { missedNames, spot } from './public/lib/spot.mjs';
 import { REVEAL_SCHEMA, REVEAL_SYSTEM, SOFTEN_SCHEMA, SOFTEN_SYSTEM, skyPrompt } from './prompts.mjs';
 import { checkStoryStart } from './public/lib/story-start.mjs';
@@ -107,13 +107,14 @@ export function createApi(env, meter, store = null) {
     const { cards, dropped } = verifyCards(transcript, proposal.cards);
     const extra = missedNames(transcript, cards);
     const all = [...cards, ...extra];
-    const question = buildQuestion(transcript, proposal.question, asked) ?? rulesQuestion(transcript, all, asked, from);
+    // Only the model's names keep a capital at the start of a sentence: the rules call any capitalised first word a name.
+    const question = buildQuestion(transcript, proposal.question, asked, { names: namesIn(cards) }) ?? rulesQuestion(transcript, all, asked, from);
     return { source: 'model', model: MODELS.text, cards: all, added: extra.length, dropped, proposed: proposal.cards?.length ?? 0, question, pick: proposal.question ?? null, ms: Date.now() - started };
   }
 
   /** ElevenLabs speaks a question built from a known template, so the voice can only ever ask, never answer. */
-  async function speak(template, span) {
-    const text = questionText(template, String(span ?? '').slice(0, 120));
+  async function speak(template, span, lower) {
+    const text = questionText(template, String(span ?? '').slice(0, 120), lower === true);
     if (!text) throw httpError(400, 'Only a template question can be spoken.');
     if (spokenCache.has(text)) return spokenCache.get(text);
     const refused = await meter.speak(text.length);
@@ -225,8 +226,8 @@ export function createApi(env, meter, store = null) {
       const refused = await meter.allow(ip);
       if (refused) return json({ error: refused }, 429);
       if (pathname === '/api/speak') {
-        const { template, span } = await bodyJson(request, 10_000);
-        return new Response(await speak(template, span), { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' } });
+        const { template, span, lower } = await bodyJson(request, 10_000);
+        return new Response(await speak(template, span, lower), { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' } });
       }
       if (pathname === '/api/transcribe') return json(await transcribe(await body(request, 32 * 1024 * 1024)));
       if (pathname === '/api/reveal') {

@@ -2,7 +2,7 @@
 // writer's own words: every card's quote must be an exact substring of the transcript (we record its offsets), its label
 // must sit inside that quote, and a person or place claim on a name must point at a clue the writer actually said.
 // Runs unchanged in the browser and in Node (tests and the server).
-import { PERSON_CUES, PLACE_PREPS, PLACE_WORDS, TITLES } from './words.mjs';
+import { ADJECTIVES, ING_NOUNS, IRREGULAR_PAST, IRREGULAR_PLURALS, PERSON_CUES, PLACE_PREPS, PLACE_WORDS, TITLES } from './words.mjs';
 
 /** Every place `needle` occurs in `text`, exactly (case and punctuation included). */
 export function findAll(text, needle) {
@@ -92,22 +92,23 @@ export function verifyCards(transcript, modelCards) {
 }
 
 // Clean Language questions (David Grove's basic questions), worded as a person would say them aloud: "And what kind of
-// hedgehog?" rather than the textbook "…is that hedgehog?". The model only picks one and a span of the writer's words;
-// the words around the span are fixed, and the app never answers.
+// hedgehog?" rather than the textbook "And what kind of hedgehog is that hedgehog?". The model only picks one and a span
+// of the writer's words; the words around the span are fixed, and the app never answers.
 export const TEMPLATES = {
   what_kind: 'And what kind of {X}?',
   anything_else: 'And is there anything else about {X}?',
   where_is: 'And where is {X}?',
-  like_what: 'And that’s {X} like what?',
+  like_what: 'And {X}, like what?',
   come_from: 'And where could {X} come from?',
   when_then: 'And when {X}, what happens?',
 };
 const MAX_SPAN_WORDS = 8;
 const WHAT_KIND_WORDS = 2;
+const MAX_QUESTION_WORDS = 18;
 
 // What each template's slot takes. "thing": a noun phrase ("the brass key"). "event": something happening ("he absorbs
-// powers", "walking through the wasteland"). "image": a noun or a quality ("nightmares", "razor sharp"). "any": a noun
-// phrase or the writer's own wh-question ("who rang the bell").
+// powers", "the tide went out"). "image": a quality or a plain noun ("razor sharp", "nightmares"). "any": a noun phrase
+// or the writer's own wh-question ("who rang the bell").
 export const SLOTS = { what_kind: 'thing', anything_else: 'any', where_is: 'thing', like_what: 'image', come_from: 'thing', when_then: 'event' };
 
 const LEADING = /^(?:a|an|the|this|that|these|those|his|her|their|its|my|our|your|some)\s+/i;
@@ -116,19 +117,67 @@ const FINITE = /\b(?:am|is|are|was|were|be|been|has|have|had|do|does|did|can|cou
 const WH = /^(?:who|what|why|where|when|how|whether)\b/i;
 // A span that stops mid-phrase ("holes in the") never fits a slot.
 const DANGLING = /\b(?:a|an|the|of|to|in|on|at|for|with|and|or|but|from|by|into|my|his|her|their|our|your|its|that|which)$/i;
+// Counting words: "twelve ravens", "a hundred winters", "thousands of moths" keep the writer's own wording.
+const QUANTITY = /^(?:(?:a|an)\s+)?(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|hundreds?|thousands?|millions?|dozens?|many|few|several|all|both|each|every|no|most|lots?|couple|handful|pair)\b/i;
+const PRONOUN = /^(?:i|me|you|he|him|she|her|it|we|us|they|them|someone|somebody|something|anyone|anybody|anything|everyone|everybody|everything|nobody|nothing|no one)$/i;
+// Words that are always lower case mid-question, whatever the writer's sentence did with them.
+const CLOSED = /^(?:a|an|the|this|that|these|those|his|her|their|its|my|our|your|some|he|she|it|we|they|you|someone|somebody|something|everyone|everybody|everything|nobody|nothing|there|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|hundreds|thousands|millions|dozens|many|few|several|all|both|each|every|no|most|lots)\b/i;
+// What can follow a verb in the past ("stole the crown", "went out", "died"), as opposed to "a held breath".
+const AFTER_VERB = /^(?:a|an|the|this|that|these|those|his|her|their|its|my|our|your|him|them|me|us|it|out|up|down|away|back|off|over|in|on|at|to|into|from|for|with|by|through|across|around|until|before|after|again|home|there|here|together|apart|forever|alone)$/i;
+// "you're lost", "she felt scared": a describing word after these, not an event in the past.
+const LINKING = /(?:['’](?:re|m|s)|^(?:am|is|are|was|were|be|been|being|get|gets|got|feel|feels|felt|seem|seems|seemed|look|looks|looked|stay|stays|stayed|so|very|too))$/;
+const NOT_PAST = new Set(['bed', 'red', 'need', 'seed', 'hundred', 'sled', 'shed', 'speed', 'feed', 'weed', 'creed',
+  'greed', 'reed', 'steed', 'sacred', 'kindred', 'naked', 'wicked', 'rugged', 'ragged', 'beloved', 'aged', 'blessed',
+  'cursed', 'jagged', 'crooked', 'wretched', 'tired', 'scared', 'bored', 'sled']);
 
-const isClause = (s) => SUBJECT.test(s) || FINITE.test(s);
+const lowerWords = (s) => words(s).map((w) => w.toLowerCase());
+/** A verb in the past with something after it that only a verb takes: "the king died", "my brother stole the crown". */
+function pastVerb(span) {
+  const ws = lowerWords(span);
+  return ws.some((w, i) => i > 0 && (IRREGULAR_PAST.has(w) || (w.length > 3 && /ed$/.test(w) && !NOT_PAST.has(w)))
+    && (i === ws.length - 1 || AFTER_VERB.test(ws[i + 1])) && !LINKING.test(ws[i - 1]));
+}
+const isClause = (s) => SUBJECT.test(s) || FINITE.test(s) || pastVerb(s);
+const isPast = (s) => pastVerb(s) || /\b(?:was|were|had|did)\b/i.test(s);
+/** "razor sharp", "cold and heavy", "lonely": a quality, not a thing. */
+const isQuality = (s) => {
+  const last = lowerWords(s).pop() ?? '';
+  return ADJECTIVES.has(last) || (/(?:ful|ous|less)$/.test(last) && !/(?:handful|mouthful|spoonful|cupful)$/.test(last));
+};
+const startsDoing = (s) => {
+  const w = lowerWords(s)[0] ?? '';
+  return w.length >= 5 && w.endsWith('ing') && !ING_NOUNS.has(w);
+};
+const possessive = (s) => /['’]s\b/.test(s);
+const doubled = (s) => /\b(\p{L}+)\s+\1\b/iu.test(s);
 
-/** Does the span read naturally in this template's slot? Cheap grammar, no model: it only has to catch the clear misfits. */
+/**
+ * Does the span read naturally in this template's slot? Cheap grammar, no model: it only has to catch the clear misfits.
+ * The span is as it will be said: a name keeps its capital, a sentence's first word that isn't a name has lost it.
+ */
 export function fits(template, span) {
-  if (DANGLING.test(span)) return false;
+  if (DANGLING.test(span) || doubled(span)) return false;
   const n = words(span).length;
+  const clause = isClause(span);
+  const wh = WH.test(span);
+  const pronoun = PRONOUN.test(span.trim());
   switch (SLOTS[template]) {
-    case 'thing': return !isClause(span) && !WH.test(span) && (template !== 'what_kind' || n <= WHAT_KIND_WORDS);
-    case 'image': return !isClause(span) && !WH.test(span);
-    case 'any': return !isClause(span) || WH.test(span);
-    // An event needs something happening: a subject with a verb, a verb, or a gerund ("walking through…").
-    case 'event': return n >= 2 && !/^(?:a|an|the)\s/i.test(span) && (isClause(span) || /^\p{L}+ing\b/iu.test(span) || /\b\p{L}+(?:s|ed)\s/u.test(`${span} `));
+    case 'thing': {
+      if (clause || wh || pronoun || isQuality(span) || startsDoing(span)) return false;
+      if (template !== 'what_kind') return true;
+      // "And what kind of hedgehog?": one or two plain words. Never a name ("what kind of Mabel?"), a possessive or a count.
+      const bare = span.replace(LEADING, '');
+      return words(bare).length <= WHAT_KIND_WORDS && !/^\p{Lu}/u.test(bare) && !possessive(bare) && !QUANTITY.test(bare);
+    }
+    case 'image':
+      // A quality ("razor sharp"), or an image the writer gave an article or made plural ("a held breath", "nightmares").
+      if (wh || pronoun || n > 4 || /^\p{Lu}/u.test(span) || possessive(span) || startsDoing(span) || QUANTITY.test(span)) return false;
+      if (isQuality(span)) return !clause;
+      return !clause && !/,|\s(?:and|or|&)\s/.test(span) && !/\b(?:i|me|my|we|us|our)\b/i.test(span)
+        && !/^(?:the|this|that|these|those|his|her|their|its|your|some)\s/i.test(span)
+        && (/^(?:a|an)\s/i.test(span) || isPlural(span));
+    case 'any': return wh || (!clause && !pronoun && !isQuality(span));
+    case 'event': return n >= 2 && !wh && (clause || startsDoing(span));
     default: return false;
   }
 }
@@ -143,27 +192,96 @@ const PERSON = [
 ];
 const toListener = (s) => PERSON.reduce((t, [re, to]) => t.replace(re, to), s);
 
+const HEAD_STOP = /\s(?:of|in|on|at|with|from|by|for|to|into|under|over|that|who|which|like)\s/i;
+/** A noun phrase about more than one thing: "holes in the fabric", "the children", "you and your sister". */
+function isPlural(span) {
+  const head = span.split(HEAD_STOP)[0];
+  if (/\s(?:and|&)\s/i.test(head)) return true;
+  const last = lowerWords(head).pop() ?? '';
+  if (IRREGULAR_PLURALS.has(last)) return true;
+  return /^\p{Ll}/u.test(words(head).pop() ?? '') && /[^s]s$/.test(last) && !/(?:us|is|ss|ics|news)$/.test(last);
+}
+
+// "she will open the door" → "she opens the door": a when-clause takes the plain present, agreeing with its subject.
+const SINGULAR_SUBJECT = /^(?:he|she|it|someone|somebody|everyone|everybody|nobody|something|nothing|everything|one)$/i;
+function present(subject, verb) {
+  const v = verb.toLowerCase();
+  const plural = /^(?:i|you|we|they)$/i.test(subject) || (!SINGULAR_SUBJECT.test(subject) && isPlural(subject));
+  if (v === 'be') return plural || /^i$/i.test(subject) ? 'are' : 'is';
+  if (plural) return verb;
+  if (v === 'have') return 'has';
+  if (/(?:s|sh|ch|x|z|o)$/.test(v)) return `${verb}es`;
+  if (/[^aeiou]y$/.test(v)) return `${verb.slice(0, -1)}ies`;
+  return `${verb}s`;
+}
+
 /**
- * The span as it is spoken in the template. "What kind of X?" takes the bare noun ("what kind of dog?"); the other thing slots point with "that" ("And where is that wasteland?"). Then first person becomes second.
+ * The span as the question says it. `lower`: the span began the writer's sentence and isn't a name ("Spiders live…").
+ * "What kind of X?" takes the bare noun ("what kind of dog?"); the other noun slots point with "that" ("And where is that
+ * wasteland?", "those holes"), keeping the writer's own words for names, counts and lists. Then first person becomes
+ * second.
  */
-function spoken(template, span) {
-  // A span that began a sentence ("The boy…") sits mid-question now; names keep their capitals.
-  let s = span.replace(LEADING, (m) => m.toLowerCase());
+export function saidAs(template, span, lower = false) {
+  let s = lower ? span.replace(/^\p{Lu}/u, (c) => c.toLowerCase()) : span;
+  s = s.replace(CLOSED, (m) => m.toLowerCase()).replace(/\b\p{Lu}{4,}\b/gu, (m) => m.toLowerCase());
+  const slot = SLOTS[template];
   if (template === 'what_kind') s = s.replace(LEADING, '');
-  else if (SLOTS[template] === 'thing' || (SLOTS[template] === 'any' && !WH.test(s))) {
-    s = s.replace(/^(?:a|an)\s+(?=\p{Ll})/u, 'that ');
-    if (words(s).length <= 3) s = s.replace(/^the\s+(?=\p{Ll})/u, 'that ');
+  else if (slot === 'thing' || (slot === 'any' && !WH.test(s))) {
+    const list = /,|\s(?:and|or|&)\s/.test(s);
+    const counted = QUANTITY.test(s);
+    if (!list && !counted) {
+      s = s.replace(/^(?:a|an)\s+(?=\p{Ll})/u, 'that ');
+      if (words(s).length <= 3) s = s.replace(/^the\s+(?=\p{Ll})/u, 'that ');
+      // A plain noun with nothing before it ("hedgehog", "fog") is pointed at too: "about that hedgehog".
+      if (/^\p{Ll}/u.test(s) && !LEADING.test(s) && !PRONOUN.test(s) && !possessive(words(s)[0] ?? '') && !startsDoing(s)) s = `that ${s}`;
+    }
+    if (isPlural(s)) s = s.replace(/^that\s/, 'those ');
+  } else if (slot === 'image') {
+    s = s.replace(/^(?:A|An)\s/, (m) => m.toLowerCase());
   }
-  // "And when they will grow up" → "And when they grow up": the when-clause takes the plain present.
-  if (template === 'when_then') s = s.replace(/\b(?:will|shall)\s+/g, '').replace(/\b(\p{L}+)'ll\b/gu, '$1');
+  if (template === 'when_then') {
+    s = s.replace(/\b(\p{L}+)\s+(?:will|shall)\s+(\p{L}+)/gu, (m, subject, verb) => `${subject} ${present(subject, verb)}`)
+      .replace(/\b(\p{L}+)['’]ll\s+(\p{L}+)/gu, (m, subject, verb) => `${subject} ${present(subject, verb)}`);
+  }
   return toListener(s);
 }
 
-const HEAD_STOP = /\s(?:of|in|on|at|with|from|by|for|to|into|under|over|that|who|which|like)\s/i;
-/** A noun phrase whose head word is a plain plural ("holes in the fabric", "the great Kansas prairies"). */
-function isPlural(span) {
-  const head = words(span.split(HEAD_STOP)[0]).pop() ?? '';
-  return /^\p{Ll}/u.test(head) && /[^s]s$/.test(head) && !/(?:us|is|ss|ics|news)$/.test(head);
+/** Fill a template with a span. Used by the page and by the server's voice, so only these questions are ever spoken. */
+export function questionText(template, span, lower = false) {
+  if (!TEMPLATES[template]) return null;
+  const x = saidAs(template, span, lower);
+  let text = TEMPLATES[template];
+  // The verb agrees: "And where are those holes…?"; a past event asks what happened.
+  if (template === 'where_is' && isPlural(x)) text = text.replace('where is', 'where are');
+  if (template === 'when_then' && isPast(x)) text = text.replace('what happens', 'what happened');
+  return text.replace('{X}', x);
+}
+
+/**
+ * What would sound wrong aloud in a finished question: the last check before anything is shown or spoken. Every rule
+ * here is a wording we have heard go wrong. An empty list means the question reads like a person asking it.
+ */
+// Words a question may say twice without sounding odd: the templates' own, and the small words that hold phrases together.
+const TEMPLATE_WORDS = new Set([...words(Object.values(TEMPLATES).join(' ').toLowerCase()), 'that', 'this', 'those',
+  'these', 'with', 'from', 'into', 'have', 'were', 'they', 'them', 'their', 'your', 'when', 'then', 'there', 'than', 'what']);
+export function wordingProblems(text) {
+  const p = [];
+  if (!/^And [^?]+\?$/.test(text) || /\s{2,}|\s[?,]/.test(text)) p.push('spacing or punctuation');
+  if (doubled(text)) p.push('a word said twice ("that that", "old old")');
+  if (/\b(?:a|an|the|that|those|this|these|your|my|his|their|our)\s+(?:a|an|the|that|those|this|these|your|my|our|their)\b/i.test(text)) p.push('two determiners in a row');
+  if (/\bkind of (?:a|an|the|that|those|this|these|your|my|his|her|their|our|some)\b/i.test(text) || /\bkind of \p{Lu}/u.test(text)) p.push('"what kind of" needs a plain noun');
+  const said = lowerWords(text).filter((w) => w.length >= 4 && !TEMPLATE_WORDS.has(w));
+  if (said.some((w, i) => said.indexOf(w) !== i)) p.push('a word said twice ("…kind of hedgehog is that hedgehog?")');
+  if (/like what\?$/.test(text) && !/, like what\?$/.test(text)) p.push('textbook "that’s X like what?"');
+  if (/\b(?:when|about|where is|where are) (?:who|what|why|where|how|whether)\b/i.test(text) && !/^And is there anything else about (?:who|what|why|where|how|whether)\b/i.test(text)) p.push('a question inside a question');
+  if (/\bwhere (?:is|are|could) (?:lonely|quiet|sharp|cold|heavy)\b/i.test(text)) p.push('asks where a quality is');
+  if (/\bis (?:those|these|you|they|we)\b|\bare (?:that|this|a|an|he|she|it)\b|\byou (?:is|was|has|does)\b|\b(?:he|she|it) (?:are|were|have)\b/i.test(text)) p.push('the verb does not agree');
+  if (/\b(?:that|this) (?:children|people|men|women|mice|geese|feet|teeth)\b/i.test(text)) p.push('"that" before a plural');
+  if (/\bwhen (?:he|she|it|someone|somebody|nobody) (?:open|go|find|come|make|take|see|run|walk|fall)\b/i.test(text)) p.push('the verb does not agree');
+  if (/\b\p{Lu}{4,}\b/u.test(text)) p.push('shouting capitals');
+  if (/[^.!?]\s(?:The|A|An|He|She|It|They|We|You|My|Our|Their|His|Her|This|That|Those|These|Someone|Nobody)\b/.test(text.slice(4))) p.push('a capital mid-question on a word that is not a name');
+  if (words(text).length > MAX_QUESTION_WORDS) p.push('too long to say in one breath');
+  return p;
 }
 
 // "the brass key" and "brass key" are the same thing to ask about.
@@ -172,24 +290,30 @@ const sameSpan = (a, b) => {
   return norm(a) === norm(b);
 };
 
-/** Fill a template with a span. Used by the page and by the server's voice, so only these questions are ever spoken. */
-export function questionText(template, span) {
-  if (!TEMPLATES[template]) return null;
-  let text = TEMPLATES[template];
-  // The verb agrees with a plural: "And where are those holes…?"
-  if (isPlural(span) && template === 'where_is') text = text.replace('where is', 'where are');
-  let x = spoken(template, span);
-  if (isPlural(span) && template !== 'what_kind') x = x.replace(/^that\s/, 'those ');
-  return text.replaceAll('{X}', x);
+/** Labels the writer's words show are names, so "Mabel" at the start of a sentence keeps her capital. */
+export const namesIn = (cards = []) => cards.filter((c) => ['person', 'place', 'name'].includes(c.kind)).map((c) => c.label);
+
+/** Does the span begin a sentence with a word that isn't a name? Then the question says it in lower case. */
+function lowerAt(transcript, start, span, names) {
+  const first = (words(span)[0] ?? '').replace(/['’]s$/, '');
+  if (!/^\p{Lu}/u.test(first) || /^I(?:['’]|$)/.test(first)) return false;
+  // "Thimble Isle", "Hollow Isle": a run of capitals is a name.
+  if (/^\p{Lu}/u.test(words(span)[1] ?? '')) return false;
+  if (!/(?:^|[.!?…]["”’)]*\s+)$/.test(transcript.slice(0, start))) return false;
+  if (TITLES.has(first) || names.some((n) => words(n).includes(first))) return false;
+  // Capitalised again mid-sentence somewhere else: it's a name the cards missed.
+  return !findAll(transcript, first).some((h) => /[^.!?…"”’\s]["”’]?\s+$/.test(transcript.slice(0, h.start)));
 }
 
 /**
  * Build one question, or null. The span must be the writer's exact words, and the question must not repeat an earlier
  * one in this conversation (`asked`: [{ template, span }]): no span is asked about twice, no template is used twice.
- * When the span doesn't fit the picked template's slot, the same words are tried in the most generic question first
- * ("And is there anything else about X?"), then the others.
+ * When the span doesn't fit the picked template's slot, or the finished question would sound wrong, the same words are
+ * tried in the most generic question first ("And is there anything else about X?"), then the others.
+ * `names`: card labels known to be names (see namesIn). The result says the span as the question does (`said`) and
+ * whether it was lowered (`lower`), which the voice needs to say the same words.
  */
-export function buildQuestion(transcript, pick, asked = [], fallback = true) {
+export function buildQuestion(transcript, pick, asked = [], { fallback = true, names = [] } = {}) {
   if (!pick) return null;
   const template = TEMPLATES[pick.template];
   const raw = String(pick.span ?? '').trim().replace(/[.,!?;:]+$/, '');
@@ -198,26 +322,29 @@ export function buildQuestion(transcript, pick, asked = [], fallback = true) {
   const hits = findAll(transcript, span);
   if (!hits.length || words(span).length > MAX_SPAN_WORDS) return null;
   if (asked.some((a) => sameSpan(a.span, span))) return null;
-  const used = asked.some((a) => a.template === pick.template);
-  if (used || !fits(pick.template, span)) {
-    if (!fallback) return null;
-    for (const t of ['anything_else', 'when_then', 'like_what', 'come_from']) {
-      if (t === pick.template) continue;
-      const q = buildQuestion(transcript, { template: t, span: raw }, asked, false);
-      if (q) return q;
-    }
-    return null;
-  }
   const at = hits[hits.length - 1];
   // The model sometimes trims the writer's article ("sour expression" for "a sour expression"). Where the transcript has
   // one right before the span, it goes back in: the words are still exactly the writer's.
   let start = at.start;
   let full = span;
   if (pick.template !== 'what_kind' && SLOTS[pick.template] !== 'event' && /^\p{Ll}/u.test(span) && !LEADING.test(span)) {
-    const article = transcript.slice(0, at.start).match(/\b(?:a|an|the|his|her|their|its|my|our|your) $/i)?.[0];
+    const article = transcript.slice(0, at.start).match(/(?:^|\s)((?:a|an|the|his|her|their|its|my|our|your) )$/i)?.[1];
     if (article) { start -= article.length; full = article + span; }
   }
-  return { template: pick.template, span: full, start, end: at.end, text: questionText(pick.template, full) };
+  const lower = lowerAt(transcript, start, full, names);
+  const asSaid = lower ? full.replace(/^\p{Lu}/u, (c) => c.toLowerCase()) : full;
+  const used = asked.some((a) => a.template === pick.template);
+  const text = !used && fits(pick.template, asSaid.replace(CLOSED, (m) => m.toLowerCase())) ? questionText(pick.template, full, lower) : null;
+  if (!text || wordingProblems(text).length) {
+    if (!fallback) return null;
+    for (const t of ['anything_else', 'when_then', 'like_what', 'come_from']) {
+      if (t === pick.template) continue;
+      const q = buildQuestion(transcript, { template: t, span: raw }, asked, { fallback: false, names });
+      if (q) return q;
+    }
+    return null;
+  }
+  return { template: pick.template, span: full, start, end: at.end, lower, said: saidAs(pick.template, full, lower), text };
 }
 
 /**
@@ -226,6 +353,7 @@ export function buildQuestion(transcript, pick, asked = [], fallback = true) {
  */
 export function rulesQuestion(transcript, cards, asked = [], from = 0) {
   const recent = [...cards.filter((c) => c.start >= from), ...cards.filter((c) => c.start < from)];
+  const names = namesIn(cards);
   const picks = [];
   for (const c of recent.filter((x) => x.kind === 'question')) {
     const span = c.quote.match(/\b(?:who|why|what|where|how)(?:\s+[^\s.?!,]+){1,3}/i)?.[0];
@@ -238,7 +366,7 @@ export function rulesQuestion(transcript, cards, asked = [], from = 0) {
     picks.push({ template: 'come_from', span: c.label });
   }
   for (const p of picks) {
-    const q = buildQuestion(transcript, p, asked);
+    const q = buildQuestion(transcript, p, asked, { names });
     if (q) return q;
   }
   return null;

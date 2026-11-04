@@ -15,7 +15,7 @@ as the beginning of a story bible, in the writer's own words:
    ("her uncle Bram", "the ferry to Hollow Isle", a title such as *Inspector*). That clue is checked against your words
    too. Otherwise it's a neutral **Name** card: the writer decides, not the model.
 4. **Back and forth.** Story Sky asks one question at a time, up to three, each built only from your words: one of
-   Clean Language's published questions ("And is there anything else about *the brass key*?") around a span the model
+   Clean Language's published questions ("And is there anything else about *that brass key*?") around a span the model
    picks and the page verifies. It prefers what you just said and never asks about the same words twice. The question
    is spoken aloud; you answer out loud, and the cards grow with every answer. Story Sky never answers, explains or
    suggests anything.
@@ -42,7 +42,7 @@ demo.
 | In-browser recording and 16 kHz WAV encoding for Muse Voice Transcribe | [`public/lib/wav.mjs`](public/lib/wav.mjs) |
 | The page: the opening question, the rounds, keep, sky | [`public/`](public/) |
 | The hand-off: a "story start" package of the run, checked again on the server, kept 24 hours for Scribsy to collect once (off until configured) | [`public/lib/story-start.mjs`](public/lib/story-start.mjs), [`docs/STORY-START.md`](docs/STORY-START.md) |
-| Tests | [`tests/`](tests/) |
+| Tests, including a wide check of how every question reads aloud | [`tests/`](tests/) |
 | Replay recorder and the one pre-rendered line of audio | [`scripts/`](scripts/) |
 
 **What came before.** Scribsy is a writing app for novelists, and the idea of turning a writer's first rush of words

@@ -17,7 +17,7 @@ Then choose ONE follow-up question. You do not write it. Pick a template id and 
 - anything_else: "And is there anything else about {X}?"  (X: a noun phrase, or the writer's own open question)
 - what_kind: "And what kind of {X}?"  (X: a bare noun of one or two words, e.g. "dog")
 - where_is: "And where is {X}?"  (X: a noun phrase for a thing or place, no verb)
-- like_what: "And that's {X} like what?"  (X: a noun or a quality, e.g. "nightmares", "razor sharp")
+- like_what: "And {X}, like what?"  (X: a quality, or an image with "a"/"an" or in the plural, e.g. "razor sharp", "nightmares")
 - come_from: "And where could {X} come from?"  (X: a noun phrase, no verb)
 - when_then: "And when {X}, what happens?"  (X: something happening, with its verb, e.g. "he absorbs powers")
 The span must be copied exactly from the transcript, at most 8 words, and must be a complete phrase that fits its

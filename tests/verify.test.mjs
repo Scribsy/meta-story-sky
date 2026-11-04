@@ -85,7 +85,7 @@ test('the question is a fixed template around the writer\'s exact span', () => {
   assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'virtual mind space' }).text,
     'And is there anything else about that virtual mind space?');
   assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'virtual mind space' }, [{ template: 'anything_else', span: 'She' }]).text,
-    'And that’s a virtual mind space like what?');
+    'And a virtual mind space, like what?');
   assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'mind space' }).text, 'And what kind of mind space?');
 });
 
@@ -121,7 +121,7 @@ test('"what kind of" takes the bare noun, still the writer\'s exact words', asyn
   assert.equal(t.slice(q.start, q.end), 'dog');
   assert.equal(buildQuestion(t, { template: 'what_kind', span: 'His dog' }).text, 'And what kind of dog?');
   assert.equal(questionText('what_kind', 'the wasteland'), 'And what kind of wasteland?');
-  assert.equal(questionText('like_what', 'a dog'), 'And that’s a dog like what?');
+  assert.equal(questionText('like_what', 'a dog'), 'And a dog, like what?');
 });
 
 test('no template is used twice in a run, and the rules pick another', () => {
@@ -173,7 +173,7 @@ test('the writer\'s words come back from the listener\'s side, and "a" points as
   assert.equal(questionText('when_then', "I'm lost in our house"), 'And when you’re lost in your house, what happens?');
   assert.equal(questionText('where_is', 'an apocalyptic wasteland'), 'And where is that apocalyptic wasteland?');
   assert.equal(questionText('anything_else', 'the rest of these gentlemen'), 'And is there anything else about the rest of these gentlemen?');
-  assert.equal(questionText('like_what', 'a dog'), 'And that’s a dog like what?');
+  assert.equal(questionText('like_what', 'a dog'), 'And a dog, like what?');
   assert.equal(questionText('anything_else', 'who rang the bell'), 'And is there anything else about who rang the bell?');
 });
 
@@ -191,13 +191,13 @@ test('a span that doesn\'t fit its slot moves to a template it does fit', async 
 
 test('plurals agree, trimmed articles come back, and a when-clause takes the plain present', async () => {
   const { questionText } = await import('../public/lib/verify.mjs');
-  assert.equal(questionText('where_is', 'holes in the fabric of reality'), 'And where are holes in the fabric of reality?');
+  assert.equal(questionText('where_is', 'holes in the fabric of reality'), 'And where are those holes in the fabric of reality?');
   assert.equal(questionText('where_is', 'the great Kansas prairies'), 'And where are the great Kansas prairies?');
   assert.equal(questionText('what_kind', 'spiders'), 'And what kind of spiders?');
   assert.equal(questionText('where_is', 'Misselthwaite Manor'), 'And where is Misselthwaite Manor?');
   assert.equal(questionText('when_then', 'they will grow up'), 'And when they grow up, what happens?');
   const t = 'She had a little thin face and a sour expression.';
   const q = buildQuestion(t, { template: 'like_what', span: 'sour expression' });
-  assert.equal(q.text, 'And that’s a sour expression like what?');
+  assert.equal(q.text, 'And a sour expression, like what?');
   assert.equal(t.slice(q.start, q.end), 'a sour expression');
 });

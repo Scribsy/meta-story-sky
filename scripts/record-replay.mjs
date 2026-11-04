@@ -50,7 +50,7 @@ for (const path of wavs) {
   console.log(`    next question: ${reveal.question?.text ?? '(none)'}`);
   let questionAudio;
   if (question && status.voice) {
-    const mp3 = await post('/api/speak', JSON.stringify({ template: question.template, span: question.span }));
+    const mp3 = await post('/api/speak', JSON.stringify({ template: question.template, span: question.span, lower: question.lower }));
     questionAudio = `data:audio/mpeg;base64,${mp3.toString('base64')}`;
   }
   rounds.push({ answer: t.transcript, transcribedBy: `transcribed by ${t.model}`, question, questionAudio, reveal });

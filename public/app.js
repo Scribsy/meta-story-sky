@@ -92,7 +92,7 @@ async function speakQuestion(q) {
   if (state.replay) return say(state.replay.rounds[state.replayRound + 1]?.questionAudio);
   if (!state.voice || state.muted) return;
   try {
-    const res = await api('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: q.template, span: q.span }) });
+    const res = await api('/api/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: q.template, span: q.span, lower: q.lower }) });
     if (!res.ok) return;
     const blob = await res.blob();
     if (new URLSearchParams(location.search).has('record')) q.audioData = await blobToDataUrl(blob);
@@ -252,8 +252,10 @@ function nextQuestion() {
     return;
   }
   state.question = q;
-  const i = q.text.indexOf(q.span);
-  $('#ask-q').innerHTML = `${esc(q.text.slice(0, i))}<em>${esc(q.span)}</em>${esc(q.text.slice(i + q.span.length))}`;
+  // The question may say the writer's words a little differently ("a whale" → "that whale"): highlight them as said.
+  const said = q.said ?? q.span;
+  const i = q.text.indexOf(said);
+  $('#ask-q').innerHTML = i < 0 ? esc(q.text) : `${esc(q.text.slice(0, i))}<em>${esc(said)}</em>${esc(q.text.slice(i + said.length))}`;
   $('#ask-round').textContent = `Question ${state.asked.length + 1} of ${MAX_QUESTIONS}`;
   $('#ask-by').textContent = '· your words, in a Clean Language question';
   $('#ask-mic .mic-label').textContent = state.replay ? 'Hear the recorded answer →' : 'Answer out loud';
