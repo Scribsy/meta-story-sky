@@ -14,7 +14,7 @@ audio, and lay each writer clip under the moment its transcript appears.
 - **MUSE:** "What's the first thing… you see?"
 - **WRITER:** "A tiny hedgehog named Pip, keeping a lighthouse out on Thimble Isle. Every night she lights the lamp
   for Mabel."
-- **MUSE:** "And what kind of hedgehog is that hedgehog?"
+- **MUSE:** "And what kind of hedgehog?"
 - **WRITER:** "A very old one, in a striped scarf and little round spectacles. She's kept the light for a hundred
   winters, because the lantern only glows when someone tells it a secret."
 - **MUSE:** "And when someone tells it a secret, what happens?"

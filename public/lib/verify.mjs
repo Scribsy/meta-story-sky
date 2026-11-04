@@ -91,10 +91,11 @@ export function verifyCards(transcript, modelCards) {
   return { cards, dropped };
 }
 
-// Clean Language questions in their published form (David Grove's basic questions). The model only picks one and a
-// span of the writer's words; the words around the span are fixed, and the app never answers.
+// Clean Language questions (David Grove's basic questions), worded as a person would say them aloud: "And what kind of
+// hedgehog?" rather than the textbook "…is that hedgehog?". The model only picks one and a span of the writer's words;
+// the words around the span are fixed, and the app never answers.
 export const TEMPLATES = {
-  what_kind: 'And what kind of {X} is that {X}?',
+  what_kind: 'And what kind of {X}?',
   anything_else: 'And is there anything else about {X}?',
   where_is: 'And where is {X}?',
   like_what: 'And that’s {X} like what?',
@@ -143,8 +144,7 @@ const PERSON = [
 const toListener = (s) => PERSON.reduce((t, [re, to]) => t.replace(re, to), s);
 
 /**
- * The span as it is spoken in the template. "What kind of X is that X?" takes the bare noun ("what kind of dog is that
- * dog?"); the other thing slots point with "that" ("And where is that wasteland?"). Then first person becomes second.
+ * The span as it is spoken in the template. "What kind of X?" takes the bare noun ("what kind of dog?"); the other thing slots point with "that" ("And where is that wasteland?"). Then first person becomes second.
  */
 function spoken(template, span) {
   // A span that began a sentence ("The boy…") sits mid-question now; names keep their capitals.
@@ -176,9 +176,8 @@ const sameSpan = (a, b) => {
 export function questionText(template, span) {
   if (!TEMPLATES[template]) return null;
   let text = TEMPLATES[template];
-  // The verb agrees with a plural: "And where are those holes…?", "And what kind of spiders are those spiders?"
+  // The verb agrees with a plural: "And where are those holes…?"
   if (isPlural(span) && template === 'where_is') text = text.replace('where is', 'where are');
-  if (isPlural(span) && template === 'what_kind') text = text.replace('is that', 'are those');
   let x = spoken(template, span);
   if (isPlural(span) && template !== 'what_kind') x = x.replace(/^that\s/, 'those ');
   return text.replaceAll('{X}', x);

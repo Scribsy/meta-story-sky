@@ -75,7 +75,7 @@ test('the question is a fixed template around the writer\'s exact span', () => {
   const q = buildQuestion(T, { template: 'anything_else', span: 'the brass key' });
   assert.equal(q.text, 'And is there anything else about that brass key?');
   assert.equal(T.slice(q.start, q.end), 'the brass key');
-  assert.equal(buildQuestion(T, { template: 'what_kind', span: 'bell' }).text, 'And what kind of bell is that bell?');
+  assert.equal(buildQuestion(T, { template: 'what_kind', span: 'bell' }).text, 'And what kind of bell?');
   assert.equal(buildQuestion(T, { template: 'anything_else', span: 'the silver key' }), null);
   assert.equal(buildQuestion(T, { template: 'tell_me_more', span: 'the bell' }), null);
   // A long span never goes into "what kind of": the same words are asked about with a template that says them once.
@@ -86,7 +86,7 @@ test('the question is a fixed template around the writer\'s exact span', () => {
     'And is there anything else about that virtual mind space?');
   assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'virtual mind space' }, [{ template: 'anything_else', span: 'She' }]).text,
     'And that’s a virtual mind space like what?');
-  assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'mind space' }).text, 'And what kind of mind space is that mind space?');
+  assert.equal(buildQuestion(mind, { template: 'what_kind', span: 'mind space' }).text, 'And what kind of mind space?');
 });
 
 test('rules spot names, places and the open question', () => {
@@ -117,10 +117,10 @@ test('"what kind of" takes the bare noun, still the writer\'s exact words', asyn
   const { questionText } = await import('../public/lib/verify.mjs');
   const t = 'A boy and a dog walking through the wasteland. His dog limps.';
   const q = buildQuestion(t, { template: 'what_kind', span: 'a dog' });
-  assert.equal(q.text, 'And what kind of dog is that dog?');
+  assert.equal(q.text, 'And what kind of dog?');
   assert.equal(t.slice(q.start, q.end), 'dog');
-  assert.equal(buildQuestion(t, { template: 'what_kind', span: 'His dog' }).text, 'And what kind of dog is that dog?');
-  assert.equal(questionText('what_kind', 'the wasteland'), 'And what kind of wasteland is that wasteland?');
+  assert.equal(buildQuestion(t, { template: 'what_kind', span: 'His dog' }).text, 'And what kind of dog?');
+  assert.equal(questionText('what_kind', 'the wasteland'), 'And what kind of wasteland?');
   assert.equal(questionText('like_what', 'a dog'), 'And that’s a dog like what?');
 });
 
@@ -193,7 +193,7 @@ test('plurals agree, trimmed articles come back, and a when-clause takes the pla
   const { questionText } = await import('../public/lib/verify.mjs');
   assert.equal(questionText('where_is', 'holes in the fabric of reality'), 'And where are holes in the fabric of reality?');
   assert.equal(questionText('where_is', 'the great Kansas prairies'), 'And where are the great Kansas prairies?');
-  assert.equal(questionText('what_kind', 'spiders'), 'And what kind of spiders are those spiders?');
+  assert.equal(questionText('what_kind', 'spiders'), 'And what kind of spiders?');
   assert.equal(questionText('where_is', 'Misselthwaite Manor'), 'And where is Misselthwaite Manor?');
   assert.equal(questionText('when_then', 'they will grow up'), 'And when they grow up, what happens?');
   const t = 'She had a little thin face and a sour expression.';

@@ -15,7 +15,7 @@ Give at most 10 cards, the ones the writer would most want to keep.
 
 Then choose ONE follow-up question. You do not write it. Pick a template id and a span:
 - anything_else: "And is there anything else about {X}?"  (X: a noun phrase, or the writer's own open question)
-- what_kind: "And what kind of {X} is that {X}?"  (X is said twice: a bare noun of one or two words, e.g. "dog")
+- what_kind: "And what kind of {X}?"  (X: a bare noun of one or two words, e.g. "dog")
 - where_is: "And where is {X}?"  (X: a noun phrase for a thing or place, no verb)
 - like_what: "And that's {X} like what?"  (X: a noun or a quality, e.g. "nightmares", "razor sharp")
 - come_from: "And where could {X} come from?"  (X: a noun phrase, no verb)
