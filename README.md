@@ -61,8 +61,8 @@ Meta's models do all the listening, reading and painting:
 
 All three are called through the [Meta Model API](https://dev.meta.ai/products/meta-model-api). Muse Spark runs at
 `reasoning_effort: minimal` (set `REASONING_EFFORT` to change it): finding quotes in a short transcript needs little
-reasoning, and it keeps each reveal to about five seconds. A full three-round run, sky included, cost about four cents
-in testing.
+reasoning. In testing, a reveal took 3 to 17 seconds this way, against about 24 at the model's default. A full
+three-round run, sky included, cost about four to five cents.
 
 The only other service is the voice: Meta's API has no text-to-speech, so **ElevenLabs** reads each question aloud
 (Eleven v4 Turbo with a soft audio-tag direction, in "Story Sky Muse", a voice we designed for the demo with ElevenLabs Voice Design; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and
@@ -122,8 +122,9 @@ transcript ──► Muse Spark ──► proposed cards {kind, label, quote, cl
 
 ## Data
 
-The demo uses only words Steven (Scribsy's founder) speaks for it, or public-domain text. No writer's data is used
-anywhere.
+No writer's data is used anywhere. The recorded run is a story written for the demo (Pip, a hedgehog who keeps a
+lighthouse), spoken by an ElevenLabs voice and run live through Meta's models. Tests and evaluations use only words
+written for them, words Scribsy's founder spoke for the demo, or public-domain text.
 
 ## License
 
