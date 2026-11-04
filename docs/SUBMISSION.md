@@ -48,7 +48,7 @@ All of it. The repository was started on 31 Oct 2026 and contains only code writ
 - in-browser recording to 16 kHz WAV;
 - the page, including a phone layout;
 - a story hand-off format, built and switched off;
-- 24 tests.
+- 28 tests, including a wide check of how every question reads aloud.
 
 No Scribsy app code is included, and nothing in the Scribsy app changes. The idea of a story bible the writer chooses
 from is Scribsy's; this take on it was written fresh. The README lists each file.
