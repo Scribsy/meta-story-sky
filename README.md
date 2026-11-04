@@ -2,8 +2,11 @@
 
 **Scribsy's entry for the Meta Global AI Developer Hackathon (Startups track, "Build for Your World").**
 
-A blank page is the hardest part of a novel. Story Sky starts a story as a short spoken conversation and hands it back
-as the beginning of a story bible, in the writer's own words:
+**Try it:** [the live demo](https://story-sky.stevenrpattison.workers.dev) (Chrome; "Play a recorded run" needs no access
+code) · [a copy with no server](https://scribsy.github.io/meta-story-sky/)
+
+A blank page is the hardest part of a novel. Story Sky is a voiced Muse for novelists: it starts a story as a short
+spoken conversation and hands it back as the beginning of a story bible, in the writer's own words:
 
 1. **One easy question.** Story Sky asks, out loud, *"What's the first thing you see?"* You answer in a sentence or
    two. **Muse Voice Transcribe** writes it down.
@@ -14,11 +17,12 @@ as the beginning of a story bible, in the writer's own words:
 3. **No guessing about names.** A name only becomes a *Person* or a *Place* when you said something that shows it
    ("her uncle Bram", "the ferry to Hollow Isle", a title such as *Inspector*). That clue is checked against your words
    too. Otherwise it's a neutral **Name** card: the writer decides, not the model.
-4. **Back and forth.** Story Sky asks one question at a time, up to three, each built only from your words: one of
-   Clean Language's published questions ("And is there anything else about *that brass key*?") around a span the model
-   picks and the page verifies. It prefers what you just said and never asks about the same words twice. The question
-   is spoken aloud; you answer out loud, and the cards grow with every answer. Story Sky never answers, explains or
-   suggests anything.
+4. **Back and forth.** Story Sky asks one question at a time, up to three, each built only from your words, in the
+   style of Clean Language's questions ("And what kind of *hedgehog*?", "And is there anything else about *that brass
+   key*?"). The model picks a template and a span of your words; the page checks the span, writes the question, and
+   checks how the finished question reads before it is shown or spoken, falling back to a plainer one if it reads
+   badly. It prefers what you just said and never asks about the same words twice. The question is spoken aloud; you
+   answer out loud, and the cards grow with every answer. Story Sky never answers, explains or suggests anything.
 5. **Keep.** You tap the cards that belong to your story.
 6. **Sky.** **Muse Image** paints a night sky, and your kept cards become its constellation: *your story's sky*.
 
@@ -34,13 +38,15 @@ demo.
 | Built in the hackathon | File |
 |---|---|
 | The quote, label, clue and span checker (exact substrings with offsets; unclued names stay neutral; no repeated questions) | [`public/lib/verify.mjs`](public/lib/verify.mjs) |
+| The question builder: six templates, slot rules, the writer's words handed back from the listener's side ("my father" → "your father"), and a wording check on every finished question | [`public/lib/verify.mjs`](public/lib/verify.mjs) |
 | Rules-only spotting on the device, used when the model is unavailable and to add names the model missed | [`public/lib/spot.mjs`](public/lib/spot.mjs), [`public/lib/words.mjs`](public/lib/words.mjs) |
 | The prompt and JSON schema for Muse Spark, and the Muse Image prompt | [`prompts.mjs`](prompts.mjs) |
 | The API that keeps the keys off the page, calls Muse Voice Transcribe, Muse Spark and Muse Image, speaks only template questions, and asks a meter before every billed call | [`api.mjs`](api.mjs) |
 | A small Node server for running it locally | [`server.mjs`](server.mjs) |
 | The hosted version on Cloudflare Workers: the same API behind an access code, with daily caps kept in a Durable Object | [`worker.mjs`](worker.mjs), [`wrangler.jsonc`](wrangler.jsonc) |
 | In-browser recording and 16 kHz WAV encoding for Muse Voice Transcribe | [`public/lib/wav.mjs`](public/lib/wav.mjs) |
-| The page: the opening question, the rounds, keep, sky | [`public/`](public/) |
+| The page: the opening question, the rounds, keep, sky, and a phone layout | [`public/`](public/) |
+| The sky's star names, placed so no two overlap; a repaint from gentler hints when the image filter declines dark story words | [`public/lib/layout.mjs`](public/lib/layout.mjs), [`api.mjs`](api.mjs) |
 | The hand-off: a "story start" package of the run, checked again on the server, kept 24 hours for Scribsy to collect once (off until configured) | [`public/lib/story-start.mjs`](public/lib/story-start.mjs), [`docs/STORY-START.md`](docs/STORY-START.md) |
 | Tests, including a wide check of how every question reads aloud | [`tests/`](tests/) |
 | Replay recorder and the one pre-rendered line of audio | [`scripts/`](scripts/) |
@@ -56,7 +62,7 @@ Meta's models do all the listening, reading and painting:
 | Step | Model | Endpoint |
 |---|---|---|
 | Hear each answer | `muse-voice-transcribe-1.0` | `POST /v1/asr/transcribe` |
-| Cards and the next question | `muse-spark-1.3`, structured output (JSON schema) | `POST /v1/chat/completions` |
+| Cards and the next question; gentler hints for the sky when needed | `muse-spark-1.3`, structured output (JSON schema) | `POST /v1/chat/completions` |
 | Sky | `muse-image-1.0` | `POST /v1/images/generations` |
 
 All three are called through the [Meta Model API](https://dev.meta.ai/products/meta-model-api). Muse Spark runs at
@@ -65,9 +71,10 @@ reasoning. In testing, a reveal took 3 to 17 seconds this way, against about 24 
 three-round run, sky included, cost about four to five cents.
 
 The only other service is the voice: Meta's API has no text-to-speech, so **ElevenLabs** reads each question aloud
-(Eleven v4 Turbo with a soft audio-tag direction, in "Story Sky Muse", a voice we designed for the demo with ElevenLabs Voice Design; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question, never free text, and
-it is optional: without an ElevenLabs key the questions are shown, not spoken. "Story Sky Muse" lives in Scribsy's ElevenLabs
-workspace, so with your own key set `ELEVENLABS_VOICE_ID` to one of your voices. The question text, which contains a few
+(Eleven v4 Turbo with a soft audio-tag direction, in "Story Sky Muse", a voice we designed for the demo with ElevenLabs
+Voice Design; the opening line is pre-rendered with Eleven v4). The server will only speak a filled-in template question,
+never free text, and it is optional: without an ElevenLabs key the questions are shown, not spoken. "Story Sky Muse"
+lives in Scribsy's ElevenLabs workspace, so with your own key set `ELEVENLABS_VOICE_ID` to one of your voices. The question text, which contains a few
 of the writer's words, is the only thing sent to ElevenLabs.
 
 ## Run it
@@ -86,7 +93,7 @@ the live models behind an access code; the [GitHub Pages copy](https://scribsy.g
 so it runs the same two ways as above.
 
 ```bash
-npm test     # the verifier, the rules and the question builder
+npm test     # the verifier, the rules, the question builder and a wide check of how questions read
 ```
 
 The server never sends a key to the browser and never logs one. It stops calling Meta once a run passes
@@ -114,7 +121,8 @@ transcript ──► Muse Spark ──► proposed cards {kind, label, quote, cl
              quote is an exact substring?  ──no──► dropped ("quote is not in the transcript")
              label inside the quote?       ──no──► dropped ("label is not inside its quote")
              person/place on a name: does a clue the writer said show it?  ──no──► neutral "Name"
-             question: known template, exact span (≤ 8 words), not asked before?  ──no──► rules pick one
+             question: known template, exact span (≤ 8 words), fits its slot, not asked before?  ──no──► rules pick one
+             finished question reads cleanly?  ──no──► a plainer template
                                    │
                                    ▼
              cards with offsets, shown dashed until the writer keeps them
