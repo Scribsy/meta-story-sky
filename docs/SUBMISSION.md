@@ -37,10 +37,21 @@ A full three-round run costs about four cents. The questions are spoken by Eleve
 text-to-speech); the server only ever speaks a filled-in template question, and the voice is optional.
 
 **What was built during the hackathon**
-All of it. The repository was started on 31 Oct 2026 and contains only code written during the hackathon: the
-verifier, the rules-only spotter, the prompts and schema, the server, the recording and WAV encoder, the spoken
-questions, the page and the tests. No Scribsy app code is included, and nothing in the Scribsy app changes. The idea of a story bible the writer
-chooses from is Scribsy's; this take on it was written fresh. The README lists each file.
+All of it. The repository was started on 31 Oct 2026 and contains only code written during the hackathon:
+- the quote verifier;
+- the Clean Language question grammar (listener's-side pronouns, slot fit, no repeats);
+- the rules-only fallback;
+- the prompts and schema;
+- the API, plus the hosted demo on Cloudflare Workers with an access code and daily spend caps;
+- the spoken questions in "Story Sky Muse", a voice designed for the demo with ElevenLabs Voice Design;
+- the storybook sky with collision-free star labels and a fallback when the image filter declines dark words;
+- in-browser recording to 16 kHz WAV;
+- the page, including a phone layout;
+- a story hand-off format, built and switched off;
+- 24 tests.
+
+No Scribsy app code is included, and nothing in the Scribsy app changes. The idea of a story bible the writer chooses
+from is Scribsy's; this take on it was written fresh. The README lists each file.
 
 **What's next**
 Testing with novelists whether verified, writer-chosen cards are a better start to a book than a blank page, and

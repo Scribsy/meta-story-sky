@@ -1,31 +1,47 @@
-# Demo video: script (3:00)
+# Demo video: script (3:00 or less, voice-over, no on-camera recording)
 
-**Steven's time: about 20 minutes.** 5 to read this, 5 for one practice run, 10 to record (two takes).
+All voices are ElevenLabs:
+- the **narrator** speaks for Scribsy;
+- **the Muse** is Story Sky's own voice, captured from the app;
+- **the writer** speaks Steven's own story, written for the demo, in a third voice.
 
-**Before recording**
-- Start the live server with both keys in its environment
-  (`META_MODEL_API_KEY=... ELEVENLABS_API_KEY=... node server.mjs`), open http://localhost:5177/?record in Chrome, full
-  screen (F11), zoom 110%. `?record` adds a download link at the end, so the best take can become the replay.
-- Record the screen, the page's audio and your mic with **Win + Alt + R** (Xbox Game Bar) or Clipchamp. Use headphones,
-  so the spoken question doesn't bleed into your mic.
-- Have a fresh story in your head, not on paper. You'll give three or four short answers, so think of one image, one
-  person, one place and one thing you don't know yet. Let the questions pull them out of you.
-- If anything fails on the take, **Play a recorded run** on the title screen is the fallback (say "here's a recorded
-  run" and carry on).
+The narrator never presents itself as Steven.
 
-| Time | On screen | You say (roughly; your own words are better) |
+**Footage:** record a real live run (the writer's clips through `/?record` or `scripts/record-replay.mjs`), save it as
+`public/replay/`, then screen-record "Play a recorded run" in Chrome at 1920×1080, with the page's audio. Every
+transcript, card, question and sky in the video comes from Meta's models live.
+
+**The writer's answers** (Steven's words, lightly cleaned of transcription stutters):
+1. "A boy and his dog, walking through an apocalyptic wasteland."
+2. "All manner of monsters pour out of holes in the fabric of reality. The boy fights to protect his dog, and in one of
+   the fights he absorbs powers he doesn't understand."
+3. "They appear as nightmares. Unclear whether they have form of their own, or only what we see them to be."
+4. "Nightmares like giant three-headed spiders, and black dragons breathing fire, and a horde of impish flying
+   creatures with razor-sharp teeth."
+
+| Time | On screen | Audio |
 |---|---|---|
-| 0:00–0:15 | The title, **Story Sky** | "I'm Steven, founder of Scribsy, a writing app for novelists. The blank page is the hardest part of a book. This is Story Sky, built this week for the Meta hackathon on Meta's Muse models. It's a standalone demo; nothing in the Scribsy app changes." Click **Begin →**. |
-| 0:15–0:40 | "What's the first thing you see?" (spoken). Tap the mic, answer in a sentence or two, tap again. | (Your first image, out loud.) |
-| 0:40–1:10 | The first cards fly in. Hover one so its words light up in the transcript. Point at the green proof line. | "Muse Voice Transcribe wrote that down, and Muse Spark found what's in it. Every card quotes me exactly: the page checks each quote character by character against what I said, and shows where it is. A paraphrase gets thrown away. And it won't guess: a name is only a person or a place if I said something that shows it." |
-| 1:10–1:40 | Question 1 is spoken. Tap **Answer out loud** and answer. New cards arrive. | (Answer.) Then: "That question is made only of my words: a standard Clean Language question. The model just picks which words it's about. It never answers or suggests anything." |
-| 1:40–2:15 | Questions 2 and 3: answer each one briefly. Let the cards grow. | (Answers. Say nothing else; let the back and forth carry it.) |
-| 2:15–2:30 | "That's plenty to start." Tap four or five cards, then **Show my sky →** | "I keep the ones that belong to my story." |
-| 2:30–2:52 | The sky paints in; stars and filaments appear. | "And Muse Image paints my story's sky, with my cards as its constellation. Three minutes ago this was a blank page. Every word on it is mine." |
-| 2:52–3:00 | Hold on the sky; the footer names the models. | "Story Sky, by Scribsy. Listening, reading and painting by Meta's Muse models; the voice is ElevenLabs." |
+| 0:00–0:12 | Title **Story Sky**. [Built by Scribsy for the Meta Global AI Developer Hackathon] | NARRATOR: "Every novel starts as a blank page, and the blank page is where writers stall. Story Sky turns it into a conversation. We built it this week, on Meta's Muse models." |
+| 0:12–0:28 | "What's the first thing you see?" The transcript appears. [Writer's answers: Steven's words, voiced by ElevenLabs] | MUSE: the opening question. WRITER: answer 1. NARRATOR: "You just talk. Muse Voice Transcribe writes it down." |
+| 0:28–1:00 | Cards fly in; hover one so its quote lights up; the green check line; a neutral "Name" card. | NARRATOR: "Muse Spark points at what's already there: the people, places and things, in your own words. Every card carries an exact quote, and the page checks it character by character against what you said. A paraphrase is thrown away, in plain sight. And it won't guess: a name only becomes a person or a place when you said something that shows it." |
+| 1:00–1:35 | Question 1, spoken; the answer; new cards. [Clean Language: the question is built only from your words] | MUSE: question 1. WRITER: answer 2. NARRATOR: "Then it asks back, with a published Clean Language question built only from your words. The model chooses which words to ask about; the page writes the question and checks it. It never answers, never suggests, and never puts words in your mouth." |
+| 1:35–2:00 | Questions 2 and 3, cut tight; the cards grow. | MUSE and WRITER only. |
+| 2:00–2:15 | `verify.mjs` (the exact-substring check), then `npm test` passing. [Built during the hackathon · public repo] | NARRATOR: "Under the hood: every check is plain code you can read, with tests. A full run costs about four cents, and each reveal takes a few seconds." |
+| 2:15–2:28 | Tapping cards to keep them; Show my sky. | NARRATOR: "You keep what belongs to your story." |
+| 2:28–2:50 | The sky paints in; the stars and names appear. | NARRATOR: "And Muse Image paints your story's sky, with your cards as its constellation. A few minutes ago this was a blank page. Every word on it is yours." |
+| 2:50–3:00 | End card: Story Sky, by Scribsy · Muse Voice Transcribe · Muse Spark · Muse Image · [Voices: ElevenLabs] · the repo link · [Built during the hackathon. Nothing in the Scribsy app changes.] | NARRATOR: "Story Sky, by Scribsy. Listening, reading and painting by Meta's Muse models. Voices by ElevenLabs." |
 
-**Rules for the take**
-- Call it Scribsy or Story Sky, and describe it as a writing app, not a developer tool.
-- Say plainly that it runs on Meta's models, that the voice is ElevenLabs, and that it was built during the hackathon.
-- Keep it under 3:00. If a reveal is slow, cut the wait in Clipchamp rather than talking over it.
-- Upload as **Unlisted** on YouTube (or a public Loom) and check the link in a private window before submitting.
+**Must be in the video:**
+- that it runs on Meta's models, named;
+- what was built during the hackathon;
+- that the voices are ElevenLabs;
+- that nothing in the Scribsy app changes.
+
+**Keep out:**
+- Scribsy app screens;
+- the access code;
+- unlicensed music;
+- the hand-off to Scribsy, which is switched off;
+- any claim that Story Sky writes for you.
+
+Keep it under 3:00. Upload it as Unlisted on YouTube, or as a public Loom, and check the link in a private window.
