@@ -70,8 +70,7 @@ https://github.com/Scribsy/meta-story-sky
 https://story-sky.stevenrpattison.workers.dev. Anyone can play the recorded run there or type a story (rules only).
 For the live version (mic, Meta's models, the spoken questions), enter the access code on the title screen.
 
-**Testing instructions / notes for judges** (the code is in Doppler, `scribsy-labs/research` → `STORY_SKY_ACCESS_CODE`;
-paste it here, never into the repo)
+**Testing instructions / notes for judges** (paste the access code here, never into the repo)
 Open the live demo in Chrome, enter the access code `<paste code>`, click Begin and allow the microphone. Answer each
 question out loud in a sentence or two (tap the mic to start and again to stop), keep the cards you like, then Show my
 sky. Headphones help, so the spoken question doesn't feed back into the mic. If the day's live budget runs out, the page
